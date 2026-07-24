@@ -1,32 +1,3 @@
-# Secrets / entorno
-.env
-
-# Entornos virtuales (machine-specific, enormes)
-venv/
-scale_agent/venv/
-scale_agent/scale_config.json
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-
-# Logs (uno pesa ~777MB, jamás a git)
-*.log
+# Único excluido por obligación técnica: pesa 742MB y GitHub rechaza archivos >100MB.
+# Es un log de errores basura, no código.
 _srv.err.log
-_srv.log
-_uvicorn.err.log
-_uvicorn.out.log
-
-# Temporales de Excel / Office
-~$*.xlsx
-*.tmp
-
-# Windows / OneDrive
-desktop.ini
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/

@@ -1,0 +1,14 @@
+{
+  "port": "COM6",
+  "baudrate": 9600,
+  "bytesize": 8,
+  "parity": "N",
+  "stopbits": 1,
+  "timeout": 1,
+  "read_mode": "continuous",
+  "command": null,
+  "unit": "kg",
+  "stability_window": 5,
+  "stability_tolerance_kg": 0.02,
+  "reconnect_seconds": 2
+}
