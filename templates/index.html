@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biotécnica Production</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --panel-3: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #334155;
+      --accent: #22c55e;
+      --accent-2: #38bdf8;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --ok: #10b981;
+      --shadow: 0 18px 40px rgba(0,0,0,0.22);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: linear-gradient(135deg, #0b1220, #111827 40%, #0f172a); color: var(--text); font-family: Inter, Arial, Helvetica, sans-serif; }
+    .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+    .sidebar {
+      background: rgba(11,18,32,0.96);
+      border-right: 1px solid var(--border);
+      padding: 22px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      backdrop-filter: blur(8px);
+    }
+    .brand h1 { margin: 0; font-size: 22px; }
+    .brand p { margin: 6px 0 18px; color: var(--muted); font-size: 13px; }
+    .nav-group { margin-bottom: 12px; }
+    .nav-title { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 14px 10px 8px; }
+    .nav-btn {
+      width: 100%; text-align: left; border: 1px solid transparent; background: transparent; color: var(--text);
+      padding: 12px 14px; border-radius: 14px; cursor: pointer; font-weight: 700; margin-bottom: 6px;
+    }
+    .nav-btn:hover { background: rgba(148,163,184,0.08); }
+    .nav-btn.active { background: rgba(56,189,248,0.16); border-color: rgba(56,189,248,0.35); color: #c8f1ff; }
+    .main { padding: 20px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: rgba(17,24,39,0.96); border: 1px solid var(--border); border-radius: 20px; padding: 14px 18px; box-shadow: var(--shadow);
+      position: sticky; top: 14px; z-index: 20; backdrop-filter: blur(8px);
+    }
+    .topbar-left, .topbar-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 800;
+    }
+    .pill.blue { background: rgba(56,189,248,0.16); color: #7dd3fc; }
+    .pill.green { background: rgba(34,197,94,0.16); color: #86efac; }
+    .pill.yellow { background: rgba(245,158,11,0.16); color: #fcd34d; }
+    .pill.red { background: rgba(239,68,68,0.16); color: #fca5a5; }
+    .layout { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 18px; }
+    .card {
+      grid-column: span 12; background: rgba(17,24,39,0.96); border: 1px solid var(--border); border-radius: 22px;
+      padding: 18px; box-shadow: var(--shadow);
+    }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    .card h2 { margin: 0 0 8px; font-size: 20px; }
+    .card h3 { margin: 18px 0 8px; font-size: 15px; color: #c2e9ff; }
+    .subtitle { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 13px; }
+    input, select, textarea, button {
+      width: 100%; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--text); font-size: 14px;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button { font-weight: 800; cursor: pointer; }
+    button:hover { filter: brightness(1.04); }
+    .btn-primary { background: var(--accent); color: #04220f; border: none; }
+    .btn-secondary { background: var(--accent-2); color: #072131; border: none; }
+    .btn-muted { background: #334155; color: white; border: none; }
+    .btn-danger { background: var(--danger); color: white; border: none; }
+    .btn-warn { background: var(--warn); color: #2d1800; border: none; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .actions button { width: auto; min-width: 140px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .status {
+      margin-top: 14px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel-3);
+      color: var(--muted); white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px; max-height: 320px; overflow: auto;
+    }
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 18px; }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; background: #0b1220; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #1f2937; text-align: left; font-size: 13px; vertical-align: top; }
+    th { color: var(--muted); background: #111827; position: sticky; top: 0; }
+    .muted { color: var(--muted); }
+    .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat {
+      background: rgba(15,23,42,0.9); border: 1px solid var(--border); border-radius: 18px; padding: 16px;
+    }
+    .stat .label { margin: 0; color: var(--muted); font-size: 12px; }
+    .stat .value { font-size: 28px; font-weight: 900; margin-top: 8px; }
+    .order-lines { display: grid; gap: 10px; margin-top: 12px; }
+    .line-card {
+      background: rgba(15,23,42,0.9); border: 1px solid var(--border); border-radius: 18px; padding: 14px;
+      display: grid; gap: 6px;
+    }
+    .line-card.active { border-color: rgba(34,197,94,0.6); box-shadow: 0 0 0 1px rgba(34,197,94,0.25) inset; }
+    .line-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .mini { font-size: 12px; color: var(--muted); }
+    .section-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    /* ── Monitor de máquinas ── */
+    .monitor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+    .mon-card {
+      border-radius: 18px; padding: 16px; border: 1px solid var(--border);
+      background: rgba(15,23,42,0.9); display: grid; gap: 8px; position: relative; overflow: hidden;
+    }
+    .mon-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+    .mon-card.on  { border-color: rgba(34,197,94,0.55); }
+    .mon-card.on::before  { background: #22c55e; }
+    .mon-card.off { border-color: rgba(239,68,68,0.55); }
+    .mon-card.off::before { background: #ef4444; }
+    .mon-card.dead { border-color: rgba(148,163,184,0.45); }
+    .mon-card.dead::before { background: #64748b; }
+    .mon-name { font-weight: 800; font-size: 15px; }
+    .mon-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800;
+      padding: 3px 10px; border-radius: 999px; width: fit-content; }
+    .mon-badge.on  { background: rgba(34,197,94,0.16); color: #86efac; }
+    .mon-badge.off { background: rgba(239,68,68,0.16); color: #fca5a5; }
+    .mon-badge.dead{ background: rgba(148,163,184,0.16); color: #cbd5e1; }
+    .mon-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .mon-card.on .mon-dot { animation: monpulse 1.2s ease-in-out infinite; }
+    @keyframes monpulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+    .mon-rpm { font-size: 30px; font-weight: 900; line-height: 1; }
+    .mon-meta { font-size: 11px; color: var(--muted); }
+    .mon-alert {
+      margin-top: 14px; padding: 12px 16px; border-radius: 14px; font-weight: 700;
+      background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.5); color: #fecaca;
+      animation: monpulse 1.6s ease-in-out infinite;
+    }
+    @media (max-width: 1200px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 { grid-column: span 12; }
+      .grid-3, .grid-4, .grid-2, .hero-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Biotécnica</h1>
+      <p>Producción, trazabilidad, almacén y empaque final</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">Operación</div>
+      <button class="nav-btn active" data-screen="dashboard">Dashboard</button>
+      <button class="nav-btn" data-screen="monitor">🖥 Monitor de Máquinas</button>
+      <button class="nav-btn" data-screen="orders">Pedidos</button>
+      <button class="nav-btn" data-screen="alerts">Alertas</button>
+      <button class="nav-btn" data-screen="pallets">Tarimas</button>
+      <button class="nav-btn" data-screen="reports">Reportes</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">Dirección</div>
+      <button class="nav-btn" data-screen="analytics">📊 Analítica &amp; Datos</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">Administración</div>
+      <button class="nav-btn" data-screen="users">Usuarios</button>
+      <button class="nav-btn" data-screen="customers">👥 Clientes</button>
+      <button class="nav-btn" data-screen="machines">⚙ Máquinas</button>
+      <button class="nav-btn" data-screen="tare-rules">⚖ Reglas de Tara</button>
+      <button class="nav-btn" data-screen="aspel-sync">🔄 Sincronizar Excel Aspel</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="pill blue" id="pillServer"></span>
+        <span class="pill yellow" id="pillUser">Sin usuario</span>
+        <span class="pill green" id="pillSelectedOrder">Sin pedido</span>
+        <span class="pill blue" id="pillSelectedLine">Sin línea</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-muted" id="pingBtn">Ping DB</button>
+        <button class="btn-secondary" id="meBtn">/auth/me</button>
+        <button class="btn-danger" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <section class="screen active" id="screen-dashboard">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>Dashboard</h2>
+              <p class="subtitle">Vista rápida del estado del sistema y accesos directos a los flujos principales.</p>
+            </div>
+            <div class="actions" style="margin-top:0">
+              <button class="btn-primary" id="goOrdersBtn">Ir a pedidos</button>
+              <button class="btn-secondary" onclick="window.open('/operator','_blank')">Abrir producción</button>
+              <button class="btn-secondary" onclick="window.open('/almacen','_blank')">Abrir almacén</button>
+              <button class="btn-secondary" id="goPalletsBtn">Ir a tarimas</button>
+            </div>
+          </div>
+          <div class="hero-stats">
+            <div class="stat"><div class="label">Pedido seleccionado</div><div class="value" id="statOrder">—</div></div>
+            <div class="stat"><div class="label">Línea seleccionada</div><div class="value" id="statLine">—</div></div>
+            <div class="stat"><div class="label">Último item</div><div class="value" id="statItem">—</div></div>
+            <div class="stat"><div class="label">Usuario actual</div><div class="value" id="statUser">—</div></div>
+          </div>
+        </div>
+
+        <div class="card span-5">
+          <h2>Selección de operador</h2>
+          <p class="subtitle">El operador elige su nombre de la lista. No se requiere contraseña.</p>
+          <label>Soy operador:</label>
+          <select id="operatorSelect"><option value="">— Cargando operadores... —</option></select>
+          <div class="actions">
+            <button class="btn-primary" id="selectOperatorBtn">Entrar como operador</button>
+            <button class="btn-muted" id="loadOperatorsBtn">Recargar lista</button>
+          </div>
+          <div id="operatorStatus" class="status">Selecciona tu nombre y presiona "Entrar".</div>
+
+          <h3 style="margin-top:18px">Admin / Supervisor</h3>
+          <p class="subtitle" style="margin-bottom:8px">Para acceso admin introduce usuario y contraseña.</p>
+          <label>Usuario</label>
+          <input id="loginUsername" value="admin" />
+          <label>Password</label>
+          <input id="loginPassword" type="password" value="admin" />
+          <div class="actions">
+            <button class="btn-secondary" id="loginBtn">Iniciar sesión (admin)</button>
+          </div>
+          <div id="loginStatus" class="status">Sin sesión.</div>
+        </div>
+
+        <div class="card span-7">
+          <h2>Estado general</h2>
+          <p class="subtitle">Verifica conexión, token y recordatorios de flujo.</p>
+          <div id="dashboardStatus" class="status">1) Importa o selecciona un pedido.
+2) Selecciona una línea.
+3) En corte crea items contra esa línea.
+4) Imprime etiqueta del item.
+5) Check-in → proceso → check-out.
+6) Cuando los items estén completos en almacén, arma tarima y saca etiqueta final.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-orders">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>Pedidos y líneas</h2>
+              <p class="subtitle">Consulta pedidos importados e inspecciona líneas. <strong>Solo lectura</strong> — la producción se registra directamente en cada estación desde <em>Estaciones Operador</em>.</p>
+            </div>
+            <div class="actions" style="margin-top:0">
+              <button class="btn-secondary" id="refreshOrdersBtn">Listar pedidos</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th title="Este es el número que debes teclear en el campo PI/PAY del operador">Nº Aspel (CVE_DOC) ← escribe este</th>
+                  <th>Cliente</th>
+                  <th>Líneas</th>
+                  <th>Kg pedido</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"><tr><td colspan="6">Sin datos.</td></tr></tbody>
+            </table>
+          </div>
+          <div id="ordersStatus" class="status"></div>
+        </div>
+
+        <div class="card span-12">
+          <h2>Detalle del pedido seleccionado</h2>
+          <p class="subtitle">Selecciona la línea a producir. Corte usará automáticamente el pedido, lote y línea que elijas.</p>
+          <div id="selectedOrderDetail" class="status">Sin pedido seleccionado.</div>
+          <div class="order-lines" id="orderLinesContainer"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="screen" id="screen-alerts">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>Alertas</h2>
+              <p class="subtitle">Controla discrepancias y resuélvelas desde admin.</p>
+            </div>
+            <div class="actions" style="margin-top:0">
+              <button class="btn-secondary" id="refreshAlertsBtn">Refrescar alertas</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Item</th><th>Tipo</th><th>Severity</th><th>Mensaje</th><th>Resuelta</th><th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="alertsTableBody"><tr><td colspan="7">Sin datos.</td></tr></tbody>
+            </table>
+          </div>
+          <div id="alertsStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="screen" id="screen-pallets">
+      <div class="layout">
+
+        <!-- Tabla general de tarimas -->
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>📦 Tarimas</h2>
+              <p class="subtitle">Estado actual de todas las tarimas. Para crear o agregar rollos usa la estación <strong>Almacén</strong> en Estaciones Operador.</p>
+            </div>
+            <div class="actions" style="margin-top:0;gap:8px;">
+              <button class="btn-secondary" style="width:auto;" onclick="loadPalletsTable('open')">Abiertas</button>
+              <button class="btn-muted"      style="width:auto;" onclick="loadPalletsTable('closed')">Cerradas</button>
+              <button class="btn-muted"      style="width:auto;" onclick="loadPalletsTable('')">Todas</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:14px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Rollos</th>
+                  <th>Kg bruto</th>
+                  <th>Kg neto</th>
+                  <th>Estado</th>
+                  <th>Creada</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="palletsTableBody"><tr><td colspan="9" class="muted">Presiona "Abiertas" o "Todas" para cargar.</td></tr></tbody>
+            </table>
+          </div>
+          <div id="palletsTableStatus" class="status" style="display:none;"></div>
+        </div>
+
+        <!-- Detalle / preview de una tarima específica -->
+        <div class="card span-12">
+          <h2>Detalle de tarima</h2>
+          <p class="subtitle">Busca una tarima por código para ver su contenido completo o cerrarla desde aquí.</p>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <label>Pallet code</label>
+              <input id="palletLookupCode" placeholder="PAL-..." />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="getPalletBtn">Ver detalle</button>
+            <button class="btn-secondary" id="previewPalletBtn">Preview etiqueta</button>
+            <button class="btn-danger" id="closePalletBtn">Cerrar tarima</button>
+          </div>
+          <div id="palletLookupStatus" class="status"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="screen" id="screen-reports">
+      <div class="layout">
+        <!-- Filters card -->
+        <div class="card span-12">
+          <h2>Reportes y exportación</h2>
+          <p class="subtitle">Filtra por PI/PAY, cliente, etapa o rango de fechas. Elige una vista.</p>
+          <div class="grid-4">
+            <div>
+              <label>PI / PAY (número SAE)</label>
+              <input id="rptPay" placeholder="Ej: PI-2026-0042" />
+            </div>
+            <div>
+              <label>Cliente (contiene)</label>
+              <input id="rptCustomer" placeholder="Ej: Mega" />
+            </div>
+            <div>
+              <label>Etapa</label>
+              <select id="rptStage">
+                <option value="">Todas</option>
+                <option value="extrusion">Extrusión</option>
+                <option value="corte">Corte</option>
+                <option value="impresion">Impresión</option>
+                <option value="bolseo">Bolseo</option>
+                <option value="almacen">Almacén</option>
+                <option value="reciclaje">Reciclaje</option>
+              </select>
+            </div>
+            <div>
+              <label>Incluir cancelados</label>
+              <select id="rptIncludeCancelled">
+                <option value="false">No</option>
+                <option value="true">Sí</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-4">
+            <div>
+              <label>Fecha desde (YYYY-MM-DD)</label>
+              <input id="rptDateFrom" placeholder="2026-05-01" />
+            </div>
+            <div>
+              <label>Fecha hasta (YYYY-MM-DD)</label>
+              <input id="rptDateTo" placeholder="2026-05-31" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="rptByPiBtn">📦 Progreso por PI</button>
+            <button class="btn-secondary" id="rptByOperatorBtn">👷 Por Operador</button>
+            <button class="btn-secondary" id="rptByShiftBtn">🌙 Por Turno</button>
+            <button class="btn-muted" id="rptExportCsvBtn">⬇ Exportar CSV</button>
+          </div>
+        </div>
+
+        <!-- By PI panel -->
+        <div class="card span-12" id="rptPanelByPi" style="display:none;">
+          <h2>📦 Progreso por Pedido (PI)</h2>
+          <p class="subtitle">Kg neto producido vs meta por pedido y por línea.</p>
+          <div id="rptByPiContent"><div class="status muted">Presiona "Progreso por PI" para cargar.</div></div>
+        </div>
+
+        <!-- By Operator panel -->
+        <div class="card span-12" id="rptPanelByOperator" style="display:none;">
+          <h2>👷 Producción por Operador</h2>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr><th>Operador</th><th>Rollos</th><th>Kg Bruto</th><th>Kg Neto</th></tr>
+              </thead>
+              <tbody id="rptByOperatorBody"><tr><td colspan="4" class="muted">Presiona "Por Operador" para cargar.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- By Shift panel -->
+        <div class="card span-12" id="rptPanelByShift" style="display:none;">
+          <h2>🌙 Producción por Turno</h2>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr><th>Turno</th><th>Rollos</th><th>Kg Bruto</th><th>Kg Neto</th></tr>
+              </thead>
+              <tbody id="rptByShiftBody"><tr><td colspan="4" class="muted">Presiona "Por Turno" para cargar.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- MONITOR DE MÁQUINAS (on/off por sensor Hall + ESP32 + MQTT)        -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="screen-monitor">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>🖥 Monitor de Máquinas</h2>
+              <p class="subtitle">Estado on/off en vivo por sensor Hall. Se actualiza cada 2 s.</p>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span id="monitorLive" class="muted" style="font-size:12px;">○ en pausa</span>
+              <button class="btn-secondary" style="width:auto;" onclick="refreshMonitor()">🔄 Refrescar</button>
+            </div>
+          </div>
+
+          <div id="monitorAlert"></div>
+
+          <div id="monitorGrid" class="monitor-grid" style="margin-top:14px;">
+            <p class="muted">Cargando…</p>
+          </div>
+
+          <div id="monitorStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-analytics">
+      <div class="layout">
+        <!-- Header + range -->
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>📊 Analítica &amp; Datos</h2>
+              <p class="subtitle">KPIs compuestos, pedidos en riesgo, calidad por máquina, exportación para analistas y snapshot para agentes de IA.</p>
+            </div>
+            <div class="actions" style="margin-top:0">
+              <button class="btn-primary" id="anRefreshBtn">↻ Actualizar</button>
+            </div>
+          </div>
+          <div class="grid-4">
+            <div>
+              <label>Desde (YYYY-MM-DD)</label>
+              <input id="anDateFrom" placeholder="2026-05-01" />
+            </div>
+            <div>
+              <label>Hasta (YYYY-MM-DD)</label>
+              <input id="anDateTo" placeholder="2026-05-31" />
+            </div>
+            <div>
+              <label>Atajo</label>
+              <select id="anQuick">
+                <option value="">Personalizado</option>
+                <option value="7">Últimos 7 días</option>
+                <option value="30" selected>Últimos 30 días</option>
+                <option value="90">Últimos 90 días</option>
+                <option value="all">Todo</option>
+              </select>
+            </div>
+          </div>
+          <div class="status muted" id="anStatus" style="margin-top:8px;"></div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="card span-12">
+          <h2>Indicadores clave</h2>
+          <div class="hero-stats" id="anKpis" style="margin-top:8px;">
+            <div class="stat"><div class="label">Kg neto</div><div class="value" id="kpiNet">—</div></div>
+            <div class="stat"><div class="label">Merma tara</div><div class="value" id="kpiMerma">—</div></div>
+            <div class="stat"><div class="label">Rollos válidos</div><div class="value" id="kpiRolls">—</div></div>
+            <div class="stat"><div class="label">WIP (en proceso)</div><div class="value" id="kpiWip">—</div></div>
+            <div class="stat"><div class="label">Rechazado (kg)</div><div class="value" id="kpiRej">—</div></div>
+            <div class="stat"><div class="label">Reimpresiones</div><div class="value" id="kpiReprints">—</div></div>
+            <div class="stat"><div class="label">Tarimas abiertas</div><div class="value" id="kpiPallets">—</div></div>
+            <div class="stat"><div class="label">Pedidos sin meta kg</div><div class="value" id="kpiNoTarget">—</div></div>
+          </div>
+        </div>
+
+        <!-- Orders at risk -->
+        <div class="card span-12">
+          <div class="section-row">
+            <div><h2>🚦 Pedidos en riesgo</h2>
+              <p class="subtitle">ETA proyectada (ritmo reciente) vs fecha de entrega Aspel.</p></div>
+            <div id="anRiskSummary" style="margin-top:0;display:flex;gap:8px;flex-wrap:wrap;"></div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead><tr>
+                <th>PI</th><th>Cliente</th><th>Entrega</th><th>Días</th>
+                <th>Avance</th><th>Restante</th><th>Ritmo</th><th>ETA</th><th>Riesgo</th>
+              </tr></thead>
+              <tbody id="anRiskBody"><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quality by machine -->
+        <div class="card span-6">
+          <h2>🏭 Calidad por máquina</h2>
+          <p class="subtitle">Score compuesto: rechazo + cancelación + reimpresión.</p>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead><tr><th>Máquina</th><th>Rechazo</th><th>Cancel.</th><th>Reimpr.</th><th>Score</th></tr></thead>
+              <tbody id="anQualityBody"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Throughput -->
+        <div class="card span-6">
+          <div class="section-row">
+            <div><h2>⚡ Productividad</h2><p class="subtitle">kg/hora y rollos/hora.</p></div>
+            <div style="margin-top:0">
+              <select id="anThroughputGroup">
+                <option value="machine">Por máquina</option>
+                <option value="operator">Por operador</option>
+                <option value="shift">Por turno</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead><tr><th>Grupo</th><th>Kg neto</th><th>kg/h</th><th>Rollos/h</th></tr></thead>
+              <tbody id="anThroughputBody"><tr><td colspan="4" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Exports -->
+        <div class="card span-12">
+          <h2>⬇ Exportar datasets para analistas</h2>
+          <p class="subtitle">Datos planos ya cruzados (joins resueltos), respetando reglas de producción. CSV o JSON, con el rango de fechas de arriba.</p>
+          <div id="anDatasets" class="grid-4" style="margin-top:8px;"></div>
+        </div>
+
+        <!-- Snapshot for agents -->
+        <div class="card span-12">
+          <div class="section-row">
+            <div><h2>🤖 Snapshot para agentes de IA</h2>
+              <p class="subtitle">Contexto consolidado (KPIs, riesgo, calidad, anomalías) en un solo JSON para alimentar agentes.</p></div>
+            <div class="actions" style="margin-top:0">
+              <button class="btn-secondary" id="anSnapshotBtn">Generar</button>
+              <button class="btn-muted" id="anSnapshotDownloadBtn">⬇ Descargar JSON</button>
+            </div>
+          </div>
+          <pre id="anSnapshotOut" style="margin-top:12px;max-height:420px;overflow:auto;background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12px;white-space:pre-wrap;">Presiona "Generar" para ver el snapshot.</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-users">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>👥 Usuarios</h2>
+              <p class="subtitle">Operadores y administradores del sistema. Requiere sesión admin activa.</p>
+            </div>
+            <button class="btn-secondary" style="width:auto;" onclick="loadUsersTable()">🔄 Refrescar</button>
+          </div>
+          <div class="table-wrap" style="margin-top:14px;">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Username</th><th>Nombre</th><th>Rol</th><th>Activo</th><th>Acción</th></tr>
+              </thead>
+              <tbody id="usersTableBody"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+          <div id="usersStatus" class="status" style="display:none;"></div>
+
+          <h3 style="margin-top:24px;">➕ Nuevo usuario</h3>
+          <div class="grid-4">
+            <div>
+              <label>Username (login)</label>
+              <input id="newUsername" placeholder="ej: jlopez" />
+            </div>
+            <div>
+              <label>Password</label>
+              <input id="newPassword" type="password" placeholder="mínimo 6 caracteres" />
+            </div>
+            <div>
+              <label>Nombre completo</label>
+              <input id="newFullName" placeholder="ej: Juan López" />
+            </div>
+            <div>
+              <label>Rol</label>
+              <select id="newRole">
+                <option value="operator">operator — aparece en dropdown de planta</option>
+                <option value="admin">admin — acceso a /ui</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" style="width:auto;" id="createUserBtn">Crear usuario</button>
+          </div>
+          <div id="createUserStatus" class="status" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- CLIENTES (distribuidor por default)                              -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="screen-customers">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>👥 Clientes — etiqueta de distribuidor</h2>
+              <p class="subtitle">Marca los pocos clientes que llevan etiqueta de DISTRIBUIDOR. A esos, el operador les verá la casilla "Distribuidor" ya seleccionada por default en cada rollo (puede desmarcarla si hace falta).</p>
+            </div>
+            <button class="btn-secondary" style="width:auto;" onclick="loadCustomersTable()">🔄 Refrescar</button>
+          </div>
+
+          <div class="section-row" style="margin-top:12px;gap:10px;align-items:flex-end;">
+            <div style="flex:1;">
+              <label>Buscar cliente</label>
+              <input id="custSearch" placeholder="Escribe parte del nombre…" oninput="onCustSearch()" />
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 0 8px;white-space:nowrap;">
+              <input type="checkbox" id="custOnlyDist" style="width:auto;padding:0;" onchange="loadCustomersTable()" />
+              <span>Solo distribuidores</span>
+            </label>
+          </div>
+
+          <div class="table-wrap" style="margin-top:14px;">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Cliente</th><th>Pedidos</th><th>Etiqueta default</th><th>Acción</th></tr>
+              </thead>
+              <tbody id="customersTableBody"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+          <div id="customersStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- MÁQUINAS                                                          -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="screen-machines">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>⚙ Máquinas</h2>
+              <p class="subtitle">Alta, edición y activación/desactivación de máquinas por estación.</p>
+            </div>
+            <button class="btn-secondary" style="width:auto;" onclick="loadMachinesTable()">🔄 Refrescar</button>
+          </div>
+
+          <div class="table-wrap" style="margin-top:14px;">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Nombre</th><th>Código</th><th>Estación</th><th>Activa</th><th>Acción</th></tr>
+              </thead>
+              <tbody id="machinesTableBody"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:22px;">➕ Nueva máquina</h3>
+          <div class="grid-3">
+            <div>
+              <label>Nombre de la máquina</label>
+              <input id="newMachineName" placeholder="Ej: Extrusora 1" />
+            </div>
+            <div>
+              <label>Código único</label>
+              <input id="newMachineCode" placeholder="Ej: EXT-01" />
+            </div>
+            <div>
+              <label>Estación</label>
+              <select id="newMachineStation">
+                <option value="1">Extrusión</option>
+                <option value="2">Corte</option>
+                <option value="3">Impresión</option>
+                <option value="4">Bolseo</option>
+                <option value="5">Almacén</option>
+                <option value="6">Reciclaje</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" style="width:auto;" onclick="createMachine()">Crear máquina</button>
+          </div>
+          <div id="machinesStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- REGLAS DE TARA                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="screen-tare-rules">
+      <div class="layout">
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>⚖ Reglas de Tara</h2>
+              <p class="subtitle">Define el peso de bobinas/tara por tipo de producto. La regla marcada como DEFAULT se aplica cuando no hay otra específica.</p>
+            </div>
+            <button class="btn-secondary" style="width:auto;" onclick="loadTareRulesTable()">🔄 Refrescar</button>
+          </div>
+
+          <div class="table-wrap" style="margin-top:14px;">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Peso fijo (kg)</th><th>Default</th><th>Activa</th><th>Notas</th><th>Acción</th></tr>
+              </thead>
+              <tbody id="tareRulesTableBody"><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:22px;">➕ Nueva regla de tara</h3>
+          <div class="grid-3">
+            <div>
+              <label>Nombre</label>
+              <input id="newTareName" placeholder="Ej: Bobina estándar 10kg" />
+            </div>
+            <div>
+              <label>Tipo</label>
+              <select id="newTareType">
+                <option value="fixed">fixed — peso fijo siempre</option>
+                <option value="manual">manual — el operador lo captura</option>
+                <option value="linear_density">linear_density — kg/metro × longitud</option>
+                <option value="threshold">threshold — rango de calibres</option>
+              </select>
+            </div>
+            <div id="newTareKgWrap">
+              <label id="newTareKgLabel">Peso fijo (kg)</label>
+              <input id="newTareFixedKg" type="number" step="0.001" placeholder="Ej: 10.000" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div>
+              <label>Notas (opcional)</label>
+              <input id="newTareNotes" placeholder="Para qué producto aplica…" />
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;padding-bottom:2px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
+                <input type="checkbox" id="newTareIsDefault" style="width:auto;padding:0;" />
+                <span>Marcar como DEFAULT global</span>
+              </label>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" style="width:auto;" onclick="createTareRule()">Crear regla</button>
+          </div>
+          <div id="tareRulesStatus" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- SINCRONIZAR EXCEL ASPEL                                           -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="screen-aspel-sync">
+      <div class="layout">
+
+        <!-- Info banner -->
+        <div class="card span-12">
+          <h2>🔄 Sincronizar Excel Aspel SAE</h2>
+          <p class="subtitle">Dos modos: sube un archivo manualmente (pruebas / emergencias) o sincroniza desde la ruta fija configurada en <code>.env</code> (producción en planta). Ambos modos son idempotentes — correr N veces no duplica datos ni borra trazabilidad.</p>
+          <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:14px;padding:13px 16px;font-size:13px;color:var(--muted);">
+            📋 <strong>Columnas esperadas:</strong> CVE_DOC, NOMBRE CLIENTE, CVE_CLPV, CVE_ART, DESCR, STATUS, FECHA_DOC, FECHA_ENT, CANT, KILOSxPARTIDA, CALLE, DOC_SIG<br>
+            ⚠️ <strong>CANT</strong> = unidades comerciales (piezas/millares) — <strong>NO son kg</strong>. &nbsp;
+            <strong>KILOSxPARTIDA</strong> puede estar vacío — no bloquea la operación.
+          </div>
+        </div>
+
+        <!-- Modo 1: Upload manual -->
+        <div class="card span-6">
+          <h2>📂 Modo 1 — Upload manual</h2>
+          <p class="subtitle">Selecciona un .xlsx desde tu PC. Útil para pruebas, demos y emergencias.</p>
+          <label>Archivo Excel (.xlsx / .xls / .xlsm)</label>
+          <input id="aspelFile" type="file" accept=".xlsx,.xls,.xlsm" />
+          <div class="actions">
+            <button class="btn-primary" id="aspelSyncBtn">🚀 Sincronizar archivo</button>
+          </div>
+          <div id="aspelSyncStatus" class="status">Selecciona un archivo Excel y presiona "Sincronizar".</div>
+        </div>
+
+        <!-- Modo 2: Ruta configurada -->
+        <div class="card span-6">
+          <h2>📁 Modo 2 — Ruta configurada</h2>
+          <p class="subtitle">Lee el Excel desde <code>ASPEL_EXCEL_PATH</code> definida en <code>.env</code>. Úsalo en producción cuando Aspel exporta automáticamente a una carpeta compartida.</p>
+          <div id="aspelPathStatusBadge" style="margin-bottom:12px;padding:10px 14px;border-radius:12px;font-size:13px;background:rgba(15,23,42,0.8);border:1px solid var(--border);">
+            Cargando estado de ruta…
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="aspelSyncPathBtn">📁 Sincronizar desde ruta</button>
+            <button class="btn-muted" style="width:auto;" onclick="loadAspelPathStatus()">↺ Verificar ruta</button>
+          </div>
+          <div id="aspelPathSyncStatus" class="status" style="display:none;"></div>
+          <div style="margin-top:14px;padding:10px 14px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;font-size:12px;color:var(--muted);">
+            💡 Para configurar: agrega <code>ASPEL_EXCEL_PATH=C:\Aspel\Reportes\Pedidos.xlsx</code> en el archivo <code>.env</code> del servidor y reinicia uvicorn.
+          </div>
+        </div>
+
+        <!-- Auto-sync status -->
+        <div class="card span-12" id="autoSyncCard">
+          <div class="section-row">
+            <div>
+              <h2>🤖 Auto-sync programado</h2>
+              <p class="subtitle">El servidor sincroniza automáticamente el Excel cada vez que se cumple el intervalo configurado. Solo activo si <code>ASPEL_EXCEL_PATH</code> está configurada en <code>.env</code>.</p>
+            </div>
+            <button class="btn-muted" style="width:auto;" onclick="loadAutoSyncStatus()">↺ Actualizar</button>
+          </div>
+          <div id="autoSyncBadge" style="margin-top:12px;padding:13px 16px;border-radius:14px;font-size:13px;background:rgba(15,23,42,0.8);border:1px solid var(--border);">
+            Cargando estado del auto-sync…
+          </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="card span-12">
+          <div class="section-row">
+            <div>
+              <h2>Historial de sincronizaciones</h2>
+              <p class="subtitle">Últimas 20 ejecuciones. La columna <strong>Fuente</strong> indica si fue upload manual, ruta configurada o auto-scheduler.</p>
+            </div>
+            <button class="btn-secondary" style="width:auto;" onclick="loadAspelHistory()">🔄 Refrescar</button>
+          </div>
+          <div class="table-wrap" style="margin-top:14px;">
+            <table style="min-width:1020px;">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Archivo</th><th>Fuente</th><th>Estado</th><th>Inicio</th><th>Fin</th>
+                  <th title="Pedidos creados">PI +</th>
+                  <th title="Pedidos actualizados">PI ~</th>
+                  <th title="Líneas creadas">Líneas +</th>
+                  <th title="Líneas actualizadas">Líneas ~</th>
+                  <th>Errores</th><th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="aspelHistoryBody"><tr><td colspan="12" class="muted">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Error viewer -->
+        <div class="card span-12" id="aspelErrorCard" style="display:none;">
+          <div class="section-row">
+            <h2>Filas con errores — import <span id="aspelErrorImportId"></span></h2>
+            <button class="btn-muted" style="width:auto;" onclick="$('aspelErrorCard').style.display='none'">Cerrar ✕</button>
+          </div>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr><th>Fila</th><th>Estado</th><th>Errores</th><th>Datos normalizados</th></tr>
+              </thead>
+              <tbody id="aspelErrorBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const state = {
+  apiBase: window.location.origin,
+  token: localStorage.getItem('biotecnica_token') || '',
+  user: JSON.parse(localStorage.getItem('biotecnica_user') || 'null'),
+  lastItemCode: localStorage.getItem('biotecnica_last_item_code') || '',
+  selectedOrder: JSON.parse(localStorage.getItem('biotecnica_selected_order') || 'null'),
+  selectedLine: JSON.parse(localStorage.getItem('biotecnica_selected_line') || 'null')
+};
+
+const $ = id => document.getElementById(id);
+
+function persist() {
+  localStorage.setItem('biotecnica_token', state.token || '');
+  localStorage.setItem('biotecnica_user', JSON.stringify(state.user || null));
+  localStorage.setItem('biotecnica_last_item_code', state.lastItemCode || '');
+  localStorage.setItem('biotecnica_selected_order', JSON.stringify(state.selectedOrder || null));
+  localStorage.setItem('biotecnica_selected_line', JSON.stringify(state.selectedLine || null));
+  renderTopState();
+}
+
+function renderTopState() {
+  $('pillServer').textContent = state.apiBase;
+  $('pillUser').textContent = state.user ? `${state.user.username} (${state.user.role})` : 'Sin usuario';
+  $('pillSelectedOrder').textContent = state.selectedOrder ? `Pedido ${state.selectedOrder.sae_order_number}` : 'Sin pedido';
+  $('pillSelectedLine').textContent = state.selectedLine ? `Línea ${state.selectedLine.line_number}` : 'Sin línea';
+  $('statOrder').textContent = state.selectedOrder ? state.selectedOrder.sae_order_number : '—';
+  $('statLine').textContent = state.selectedLine ? state.selectedLine.line_number : '—';
+  $('statItem').textContent = state.lastItemCode || '—';
+  $('statUser').textContent = state.user ? state.user.username : '—';
+}
+
+
+function setStatus(id, data, isError = false) {
+  const el = $(id);
+  if (!el) return;
+  let text;
+  if (typeof data === 'string')       text = data;
+  else if (data instanceof Error)     text = data.message;
+  else                                text = JSON.stringify(data, null, 2);
+  el.textContent = text;
+  el.style.color = isError ? '#fca5a5' : '#94a3b8';
+}
+
+function headers(json = true) {
+  const h = {};
+  if (json) h['Content-Type'] = 'application/json';
+  if (state.token) h['Authorization'] = `Bearer ${state.token}`;
+  return h;
+}
+
+async function api(path, options = {}) {
+  const url = `${state.apiBase}${path}`;
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (netErr) {
+    // Error de red (servidor caído, CORS, etc.)
+    throw new Error(`Sin conexión al servidor (${netErr.message})`);
+  }
+  const text = await response.text();
+  let data;
+  try { data = text ? JSON.parse(text) : {}; } catch { data = text; }
+  if (!response.ok) {
+    // Error legible: 401 / 403 / 4xx / 5xx
+    const detail = data?.detail || data?.message || JSON.stringify(data);
+    if (response.status === 401) throw new Error('No autenticado — inicia sesión como admin primero');
+    if (response.status === 403) throw new Error('Acceso denegado — se requiere rol admin');
+    throw new Error(`Error ${response.status}: ${detail}`);
+  }
+  return data;
+}
+
+function activateScreen(screen) {
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screen));
+  document.querySelectorAll('.screen').forEach(section => section.classList.toggle('active', section.id === `screen-${screen}`));
+  // Stop the live monitor when leaving its screen; (re)start it when entering.
+  stopMonitorPolling();
+  // Auto-load data for screens that need it
+  if (screen === 'monitor')     startMonitorPolling();
+  if (screen === 'orders')      loadOrders();
+  if (screen === 'machines')    loadMachinesTable();
+  if (screen === 'tare-rules') loadTareRulesTable();
+  if (screen === 'aspel-sync') { loadAspelHistory(); loadAspelPathStatus(); loadAutoSyncStatus(); }
+  if (screen === 'pallets')    loadPalletsTable('open');
+  if (screen === 'users')      loadUsersTable();
+  if (screen === 'customers')  loadCustomersTable();
+  if (screen === 'analytics')  loadAnalytics();
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => activateScreen(btn.dataset.screen)));
+$('goOrdersBtn').onclick = () => activateScreen('orders');
+$('goPalletsBtn').onclick = () => activateScreen('pallets');
+
+// ── Monitor de máquinas (on/off en vivo) ──────────────────────────────────────
+const MONITOR_REFRESH_MS = 2000;
+const MONITOR_ALERT_SECONDS = 5;   // alerta destacada si una máquina lleva > 5 s sin girar
+let monitorTimer = null;
+
+function stopMonitorPolling() {
+  if (monitorTimer) { clearInterval(monitorTimer); monitorTimer = null; }
+  const live = $('monitorLive');
+  if (live) { live.textContent = '○ en pausa'; live.style.color = ''; }
+}
+
+function startMonitorPolling() {
+  stopMonitorPolling();
+  refreshMonitor();
+  monitorTimer = setInterval(refreshMonitor, MONITOR_REFRESH_MS);
+}
+
+async function refreshMonitor() {
+  try {
+    const data = await api('/monitor/status', { headers: headers(false) });
+    renderMonitor(data);
+    const live = $('monitorLive');
+    if (live) { live.textContent = '● en vivo'; live.style.color = '#86efac'; }
+    setStatus('monitorStatus', '');
+  } catch (e) {
+    setStatus('monitorStatus', e, true);
+    const live = $('monitorLive');
+    if (live) { live.textContent = '● sin conexión'; live.style.color = '#fca5a5'; }
+  }
+}
+
+function renderMonitor(data) {
+  const grid = $('monitorGrid');
+  const alertBox = $('monitorAlert');
+  const machines = (data && data.machines) || [];
+
+  if (!machines.length) {
+    grid.innerHTML = '<p class="muted">Ninguna máquina con sensor reportando todavía. Verifica los ESP32 y el broker MQTT.</p>';
+    alertBox.innerHTML = '';
+    return;
+  }
+
+  const fmtSecs = s => (s == null ? '—' : (s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)} min`));
+
+  grid.innerHTML = machines.map(m => {
+    let cls, badgeTxt;
+    if (m.state === 'girando')        { cls = 'on';   badgeTxt = 'Girando'; }
+    else if (m.state === 'parado')    { cls = 'off';  badgeTxt = 'Parada'; }
+    else                              { cls = 'dead'; badgeTxt = 'Sin señal'; }
+    const sinceTxt = m.state === 'girando'
+      ? `Encendida hace ${fmtSecs(m.state_since_seconds)}`
+      : `${m.state === 'parado' ? 'Detenida' : 'Sin datos'} hace ${fmtSecs(m.state === 'sin_senal' ? m.seconds_since_pulse : m.state_since_seconds)}`;
+    return `
+      <div class="mon-card ${cls}">
+        <div class="mon-name">${m.machine_name}</div>
+        <span class="mon-badge ${cls}"><span class="mon-dot"></span>${badgeTxt}</span>
+        <div class="mon-rpm">${m.state === 'girando' ? m.rpm : 0}<span style="font-size:13px;font-weight:600;color:var(--muted);"> RPM</span></div>
+        <div class="mon-meta">${m.station} · ${m.machine_code}</div>
+        <div class="mon-meta">${sinceTxt} · ${m.last_freq_hz.toFixed(1)} Hz</div>
+      </div>`;
+  }).join('');
+
+  // Alerta destacada: máquinas que llevan > MONITOR_ALERT_SECONDS sin girar.
+  const downSecs = m => (m.state === 'sin_senal' ? m.seconds_since_pulse : m.state_since_seconds);
+  const alarmed = machines.filter(m => m.state !== 'girando' && (downSecs(m) == null || downSecs(m) > MONITOR_ALERT_SECONDS));
+  if (alarmed.length) {
+    const names = alarmed.map(m => m.machine_name).join(', ');
+    alertBox.innerHTML = `<div class="mon-alert">⚠ ${alarmed.length} máquina${alarmed.length > 1 ? 's' : ''} detenida${alarmed.length > 1 ? 's' : ''}: ${names}</div>`;
+  } else {
+    alertBox.innerHTML = '';
+  }
+}
+
+$('pingBtn').onclick = async () => {
+  try { setStatus('dashboardStatus', await api('/db-test')); } catch (e) { setStatus('dashboardStatus', e, true); }
+};
+
+$('loginBtn').onclick = async () => {
+  try {
+    const data = await api('/auth/login', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ username: $('loginUsername').value.trim(), password: $('loginPassword').value })
+    });
+    state.token = data.access_token;
+    state.user = data.user;
+    persist();
+    setStatus('loginStatus', data);
+  } catch (e) { setStatus('loginStatus', e, true); }
+};
+
+$('meBtn').onclick = async () => {
+  try {
+    const data = await api('/auth/me', { headers: headers(false) });
+    state.user = data;
+    persist();
+    setStatus('dashboardStatus', data);
+  } catch (e) { setStatus('dashboardStatus', e, true); }
+};
+
+$('logoutBtn').onclick = () => {
+  state.token = '';
+  state.user = null;
+  persist();
+  setStatus('loginStatus', 'Sesión cerrada.');
+};
+
+async function loadOrders() {
+  try {
+    const data = await api('/orders/', { headers: headers(false) });
+    renderOrders(data);
+    setStatus('ordersStatus', data);
+    setStatus('importStatus', data);
+  } catch (e) {
+    setStatus('ordersStatus', e, true);
+    setStatus('importStatus', e, true);
+  }
+}
+
+function renderOrders(data) {
+  const body = $('ordersTableBody');
+  body.innerHTML = '';
+  if (!Array.isArray(data) || data.length === 0) {
+    body.innerHTML = '<tr><td colspan="6">No hay pedidos.</td></tr>';
+    return;
+  }
+  data.forEach(order => {
+    const tr = document.createElement('tr');
+    const linesCount = Array.isArray(order.lines) ? order.lines.length : '—';
+    const linesColor = linesCount === 0 ? '#ef4444' : '#22c55e';
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-weight:800;font-size:15px;">${order.sae_order_number}</td>
+      <td>${order.customer_name || ''}</td>
+      <td><span style="color:${linesColor};font-weight:700;">${linesCount}</span></td>
+      <td>${order.ordered_kg || ''}</td>
+      <td></td>
+    `;
+    const td = tr.querySelector('td:last-child');
+    const btn = document.createElement('button');
+    btn.className = 'btn-primary';
+    btn.textContent = 'Seleccionar';
+    btn.onclick = () => selectOrder(order);
+    td.appendChild(btn);
+    body.appendChild(tr);
+  });
+}
+
+function selectOrder(order) {
+  state.selectedOrder = order;
+  state.selectedLine = null;
+  persist();
+  renderOrderDetail();
+  activateScreen('orders');
+}
+
+function selectLine(line) {
+  state.selectedLine = line;
+  persist();
+  renderOrderDetail();
+  // Stay on orders screen — operator production is on /operator?station=X
+}
+
+function renderOrderDetail() {
+  if (!state.selectedOrder) {
+    $('selectedOrderDetail').textContent = 'Sin pedido seleccionado.';
+    $('orderLinesContainer').innerHTML = '';
+    return;
+  }
+
+  $('selectedOrderDetail').textContent = JSON.stringify(state.selectedOrder, null, 2);
+  const container = $('orderLinesContainer');
+  container.innerHTML = '';
+
+  const lines = state.selectedOrder.lines || [];
+  if (!lines.length) {
+    container.innerHTML = '<div class="muted">Este pedido no tiene líneas.</div>';
+    return;
+  }
+
+  lines.forEach(line => {
+    const div = document.createElement('div');
+    div.className = 'line-card' + (state.selectedLine && state.selectedLine.sales_order_line_id === line.sales_order_line_id ? ' active' : '');
+    div.innerHTML = `
+      <div class="line-top">
+        <div><strong>Línea ${line.line_number}</strong> — ${line.product_description}</div>
+        <div class="pill blue">${line.status}</div>
+      </div>
+      <div class="mini">Presentación: ${line.presentation_type || '---'} | Medida: ${line.measure || '---'} | Calibre: ${line.caliber || '---'} | Color: ${line.color || '---'}</div>
+      <div class="mini">Objetivo: ${line.ordered_kg} kg | Producido: ${line.completed_kg} kg</div>
+    `;
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const btn = document.createElement('button');
+    btn.className = 'btn-primary';
+    btn.textContent = 'Usar esta línea';
+    btn.onclick = () => selectLine(line);
+    actions.appendChild(btn);
+    div.appendChild(actions);
+    container.appendChild(div);
+  });
+}
+
+$('refreshOrdersBtn').onclick = loadOrders;
+
+async function refreshAlerts() {
+  try {
+    const data = await api('/alerts/', { headers: headers(false) });
+    renderAlerts(data);
+    setStatus('alertsStatus', data);
+  } catch (e) { setStatus('alertsStatus', e, true); }
+}
+
+function renderAlerts(data) {
+  const body = $('alertsTableBody');
+  body.innerHTML = '';
+  if (!Array.isArray(data) || data.length === 0) {
+    body.innerHTML = '<tr><td colspan="7">No hay alertas.</td></tr>';
+    return;
+  }
+  data.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.alert_id}</td><td>${a.item_code || ''}</td><td>${a.alert_type}</td><td>${a.severity}</td><td>${a.message}</td><td>${a.resolved ? 'Sí' : 'No'}</td><td></td>`;
+    const td = tr.querySelector('td:last-child');
+    if (a.resolved) {
+      td.textContent = 'Ya resuelta';
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.textContent = 'Resolver';
+      btn.onclick = async () => {
+        try {
+          const data = await api(`/alerts/${a.alert_id}/resolve`, { method: 'POST', headers: headers(), body: JSON.stringify({}) });
+          setStatus('alertsStatus', data);
+          refreshAlerts();
+        } catch (e) { setStatus('alertsStatus', e, true); }
+      };
+      td.appendChild(btn);
+    }
+    body.appendChild(tr);
+  });
+}
+$('refreshAlertsBtn').onclick = refreshAlerts;
+
+// printLabelBtn, labelHistoryBtn, previewLabelBtn eliminados — reimprimir desde /operator
+
+// createPalletBtn / addItemToPalletBtn eliminados — operación de almacén vive en /operator
+
+async function loadPalletsTable(statusFilter) {
+  const tbody  = $('palletsTableBody');
+  const statEl = $('palletsTableStatus');
+  tbody.innerHTML = '<tr><td colspan="9" class="muted">Cargando…</td></tr>';
+  statEl.style.display = 'none';
+  try {
+    const qs   = statusFilter ? `?status=${statusFilter}` : '';
+    const data = await api(`/pallets/${qs}`, { headers: headers(false) });
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="muted">Sin tarimas.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(p => {
+      const stColor = p.status === 'open' ? '#22c55e' : '#94a3b8';
+      const stLabel = p.status === 'open' ? '🟢 Abierta' : '⬜ Cerrada';
+      const created = p.created_at ? new Date(p.created_at).toLocaleString('es-MX') : '—';
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;">${p.pallet_code}</td>
+        <td><strong>${p.sae_order_number}</strong></td>
+        <td>${p.customer_name}</td>
+        <td style="font-weight:800;">${p.item_count}</td>
+        <td>${p.total_gross_kg.toFixed(2)} kg</td>
+        <td>${p.total_net_kg.toFixed(2)} kg</td>
+        <td><span style="color:${stColor};font-weight:700;">${stLabel}</span></td>
+        <td style="font-size:12px;">${created}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn-secondary" style="width:auto;padding:4px 10px;font-size:12px;"
+            onclick="$('palletLookupCode').value='${p.pallet_code}';$('getPalletBtn').click();">Ver</button>
+          <button class="btn-secondary" style="width:auto;padding:4px 10px;font-size:12px;"
+            onclick="window.open('${state.apiBase}/pallets/${p.pallet_code}/preview','_blank')">Etiqueta</button>
+          ${p.status==='open'
+            ? `<button class="btn-danger" style="width:auto;padding:4px 10px;font-size:12px;"
+                onclick="closePalletDirect('${p.pallet_code}')">Cerrar</button>`
+            : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    statEl.style.display = 'block';
+    setStatus('palletsTableStatus', e, true);
+    tbody.innerHTML = '<tr><td colspan="9" class="muted">Error al cargar.</td></tr>';
+  }
+}
+
+async function closePalletDirect(code) {
+  if (!confirm(`¿Cerrar tarima ${code}? No podrás agregar más rollos después.`)) return;
+  try {
+    const data = await api(`/pallets/${encodeURIComponent(code)}/close`, { method: 'POST', headers: headers(), body: JSON.stringify({}) });
+    setStatus('palletLookupStatus', data);
+    loadPalletsTable('open');
+  } catch(e) { setStatus('palletLookupStatus', e, true); }
+}
+
+$('getPalletBtn').onclick = async () => {
+  try {
+    const code = $('palletLookupCode').value.trim();
+    if (!code) throw new Error('Primero captura o genera un pallet code.');
+    setStatus('palletLookupStatus', await api(`/pallets/${encodeURIComponent(code)}`, { headers: headers(false) }));
+  } catch (e) {
+    setStatus('palletLookupStatus', e, true);
+  }
+};
+$('previewPalletBtn').onclick = () => {
+  const code = $('palletLookupCode').value.trim();
+  if (!code) {
+    setStatus('palletLookupStatus', 'Primero captura o genera un pallet code.', true);
+    return;
+  }
+  window.open(`${state.apiBase}/pallets/${encodeURIComponent(code)}/preview`, '_blank');
+};
+$('closePalletBtn').onclick = async () => {
+  const code = $('palletLookupCode').value.trim();
+  if (!code) { setStatus('palletLookupStatus', 'Ingresa el pallet code.', true); return; }
+  if (!confirm(`¿Cerrar tarima ${code}? Después de cerrada no podrás agregar más items.`)) return;
+  try {
+    const data = await api(`/pallets/${encodeURIComponent(code)}/close`, {
+      method: 'POST', headers: headers(), body: JSON.stringify({})
+    });
+    setStatus('palletLookupStatus', data);
+  } catch (e) { setStatus('palletLookupStatus', e, true); }
+};
+// ── USERS SCREEN ──────────────────────────────────────────────────────────
+async function loadUsersTable() {
+  const tbody  = $('usersTableBody');
+  const statEl = $('usersStatus');
+  tbody.innerHTML = '<tr><td colspan="6" class="muted">Cargando…</td></tr>';
+  statEl.style.display = 'none';
+  try {
+    const data = await api('/admin/users', { headers: headers(false) });
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="muted">Sin usuarios.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td>${u.user_id}</td>
+        <td style="font-family:monospace;">${u.username}</td>
+        <td><strong>${u.full_name || '—'}</strong></td>
+        <td><span style="color:${u.role==='admin'?'#f59e0b':'#38bdf8'};font-weight:700;">${u.role}</span></td>
+        <td><span style="color:${u.is_active?'#22c55e':'#ef4444'};font-weight:700;">${u.is_active?'✓ Activo':'✗ Inactivo'}</span></td>
+        <td style="white-space:nowrap;">
+          ${u.is_active
+            ? `<button class="btn-danger" style="width:auto;padding:4px 10px;font-size:12px;" onclick="toggleUserStatus(${u.user_id},false)">Desactivar</button>`
+            : `<button class="btn-primary" style="width:auto;padding:4px 10px;font-size:12px;" onclick="toggleUserStatus(${u.user_id},true)">Activar</button>`}
+        </td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6"></td></tr>';
+    statEl.style.display = 'block';
+    setStatus('usersStatus', e, true);
+  }
+}
+
+async function toggleUserStatus(userId, active) {
+  try {
+    await api(`/admin/users/${userId}/status`, {
+      method: 'PATCH', headers: headers(),
+      body: JSON.stringify({ is_active: active })
+    });
+    loadUsersTable();
+  } catch(e) {
+    $('usersStatus').style.display = 'block';
+    setStatus('usersStatus', e, true);
+  }
+}
+
+$('createUserBtn').onclick = async () => {
+  const username  = $('newUsername').value.trim();
+  const password  = $('newPassword').value;
+  const full_name = $('newFullName').value.trim();
+  const role      = $('newRole').value;
+  const statEl    = $('createUserStatus');
+
+  if (!username || !password || !full_name) {
+    statEl.style.display = 'block';
+    setStatus('createUserStatus', 'Completa todos los campos.', true);
+    return;
+  }
+  statEl.style.display = 'block';
+  setStatus('createUserStatus', '⏳ Creando usuario…');
+  try {
+    const data = await api('/admin/users', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ username, password, full_name, role })
+    });
+    setStatus('createUserStatus', `✅ Usuario "${data.username}" creado (ID ${data.user_id})`);
+    $('newUsername').value = ''; $('newPassword').value = ''; $('newFullName').value = '';
+    loadUsersTable();
+  } catch(e) { setStatus('createUserStatus', e, true); }
+};
+
+// listProductsBtn, listStationsBtn eliminados — sección Config legacy eliminada
+
+// ── MACHINES SCREEN ────────────────────────────────────────────────────────
+async function loadMachinesTable() {
+  try {
+    const data = await api('/config/machines?include_all=true', { headers: headers(false) });
+    const stations = await api('/config/stations', { headers: headers(false) });
+    const stMap = {};
+    stations.forEach(s => stMap[s.station_id] = s.name);
+
+    const tbody = $('machinesTableBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="muted">Sin máquinas registradas.</td></tr>'; return; }
+    tbody.innerHTML = data.map(m => `
+      <tr>
+        <td>${m.machine_id}</td>
+        <td><strong>${m.machine_name}</strong></td>
+        <td style="font-family:monospace;">${m.machine_code}</td>
+        <td>${stMap[m.station_id] || m.station_id}</td>
+        <td><span style="color:${m.is_active?'#22c55e':'#ef4444'};font-weight:700;">${m.is_active?'✓ Activa':'✗ Inactiva'}</span></td>
+        <td style="white-space:nowrap;">
+          ${m.is_active
+            ? `<button class="btn-danger" style="width:auto;padding:5px 12px;font-size:12px;" onclick="toggleMachine(${m.machine_id},false)">Desactivar</button>`
+            : `<button class="btn-primary" style="width:auto;padding:5px 12px;font-size:12px;" onclick="toggleMachine(${m.machine_id},true)">Activar</button>`
+          }
+        </td>
+      </tr>`).join('');
+    // Also populate the station select in form with real station IDs
+    populateMachineStationSelect(stations);
+  } catch(e) { setStatus('machinesStatus', e, true); }
+}
+
+function populateMachineStationSelect(stations) {
+  const sel = $('newMachineStation');
+  if (!sel) return;
+  sel.innerHTML = stations.map(s => `<option value="${s.station_id}">${s.name} (${s.code})</option>`).join('');
+}
+
+async function toggleMachine(id, active) {
+  try {
+    await api(`/config/machines/${id}`, {
+      method: 'PATCH', headers: headers(),
+      body: JSON.stringify({ is_active: active })
+    });
+    loadMachinesTable();
+    setStatus('machinesStatus', `Máquina ${id} ${active ? 'activada' : 'desactivada'} OK`);
+  } catch(e) { setStatus('machinesStatus', e, true); }
+}
+
+async function createMachine() {
+  const name  = $('newMachineName').value.trim();
+  const code  = $('newMachineCode').value.trim().toUpperCase();
+  const stId  = parseInt($('newMachineStation').value);
+  if (!name || !code) { setStatus('machinesStatus', 'Nombre y código son requeridos', true); return; }
+  try {
+    const d = await api('/config/machines', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ machine_name: name, machine_code: code, station_id: stId })
+    });
+    setStatus('machinesStatus', d);
+    $('newMachineName').value = ''; $('newMachineCode').value = '';
+    loadMachinesTable();
+  } catch(e) { setStatus('machinesStatus', e, true); }
+}
+
+// ── TARE RULES SCREEN ──────────────────────────────────────────────────────
+async function loadTareRulesTable() {
+  try {
+    const data = await api('/config/tare-rules?include_inactive=true', { headers: headers(false) });
+    const tbody = $('tareRulesTableBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="muted">Sin reglas de tara.</td></tr>'; return; }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td>${r.id}</td>
+        <td><strong>${r.name}</strong></td>
+        <td><code>${r.rule_type}</code></td>
+        <td>${r.fixed_weight_kg != null ? r.fixed_weight_kg.toFixed(3)+' kg' : '—'}</td>
+        <td>${r.is_default ? '<span style="color:#f59e0b;font-weight:800;">★ DEFAULT</span>' : '—'}</td>
+        <td><span style="color:${r.is_active?'#22c55e':'#ef4444'};font-weight:700;">${r.is_active?'✓':'✗'}</span></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.notes||''}">${r.notes||'—'}</td>
+        <td style="white-space:nowrap;">
+          ${!r.is_default ? `<button class="btn-warn" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setTareDefault(${r.id})">Default</button>` : ''}
+          ${r.is_active && !r.is_default
+            ? `<button class="btn-danger" style="width:auto;padding:5px 10px;font-size:12px;" onclick="deactivateTare(${r.id})">Desactivar</button>`
+            : ''
+          }
+        </td>
+      </tr>`).join('');
+  } catch(e) { setStatus('tareRulesStatus', e, true); }
+}
+
+// ── Clientes (distribuidor por default) ───────────────────────────────────────
+let custSearchTimer = null;
+function onCustSearch() {
+  if (custSearchTimer) clearTimeout(custSearchTimer);
+  custSearchTimer = setTimeout(loadCustomersTable, 250);
+}
+
+async function loadCustomersTable() {
+  try {
+    const search = ($('custSearch').value || '').trim();
+    const onlyDist = $('custOnlyDist').checked;
+    const qs = new URLSearchParams();
+    if (search)   qs.set('search', search);
+    if (onlyDist) qs.set('only_distributor', 'true');
+    const data = await api(`/config/customers${qs.toString() ? '?'+qs.toString() : ''}`, { headers: headers(false) });
+    const tbody = $('customersTableBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="muted">Sin clientes.</td></tr>'; return; }
+    tbody.innerHTML = data.map(c => {
+      const isDist = c.is_distributor;
+      const badge = isDist
+        ? '<span style="background:#1e40af;color:#dbeafe;padding:3px 9px;border-radius:6px;font-weight:800;font-size:12px;">DISTRIBUIDOR</span>'
+        : '<span style="color:#94a3b8;">Estándar</span>';
+      const btn = isDist
+        ? `<button class="btn-secondary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerBranding(${c.customer_id}, 'normal')">Quitar distribuidor</button>`
+        : `<button class="btn-primary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerBranding(${c.customer_id}, 'distributor')">Marcar distribuidor</button>`;
+      return `<tr>
+        <td>${c.customer_id}</td>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.order_count}</td>
+        <td>${badge}</td>
+        <td style="white-space:nowrap;">${btn}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { setStatus('customersStatus', e, true); }
+}
+
+async function setCustomerBranding(customerId, mode) {
+  try {
+    await api(`/config/customers/${customerId}`, {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ default_branding_mode: mode }),
+    });
+    setStatus('customersStatus', mode === 'distributor' ? 'Cliente marcado como distribuidor ✓' : 'Cliente vuelto a estándar ✓');
+    loadCustomersTable();
+  } catch(e) { setStatus('customersStatus', e, true); }
+}
+
+// Tipo de tara → campo dinámico
+$('newTareType').onchange = function() {
+  const t = this.value;
+  const wrap = $('newTareKgWrap');
+  const lbl  = $('newTareKgLabel');
+  const inp  = $('newTareFixedKg');
+  if (t === 'manual') {
+    wrap.style.opacity = '0.35';
+    wrap.style.pointerEvents = 'none';
+    inp.value = '';
+    lbl.textContent = 'Valor numérico (no aplica)';
+  } else {
+    wrap.style.opacity = '';
+    wrap.style.pointerEvents = '';
+    lbl.textContent = t === 'linear_density' ? 'Densidad (kg/m)' : 'Peso fijo (kg)';
+    inp.placeholder = t === 'linear_density' ? 'Ej: 0.0035' : 'Ej: 10.000';
+  }
+};
+
+async function createTareRule() {
+  const name = $('newTareName').value.trim();
+  const type = $('newTareType').value;
+  const fixedKg = parseFloat($('newTareFixedKg').value) || null;
+  const notes = $('newTareNotes').value.trim() || null;
+  const isDefault = $('newTareIsDefault').checked;
+  if (!name) { setStatus('tareRulesStatus', 'El nombre es requerido', true); return; }
+  if (type === 'fixed' && !fixedKg) { setStatus('tareRulesStatus', 'Ingresa el peso fijo en kg', true); return; }
+  if (type === 'linear_density' && !fixedKg) { setStatus('tareRulesStatus', 'Ingresa la densidad en kg/m', true); return; }
+  try {
+    const d = await api('/config/tare-rules', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ name, rule_type: type, fixed_weight_kg: fixedKg, notes, is_default: isDefault })
+    });
+    setStatus('tareRulesStatus', d);
+    $('newTareName').value = ''; $('newTareFixedKg').value = ''; $('newTareNotes').value = ''; $('newTareIsDefault').checked = false;
+    loadTareRulesTable();
+  } catch(e) { setStatus('tareRulesStatus', e, true); }
+}
+
+async function setTareDefault(id) {
+  try {
+    await api(`/config/tare-rules/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ is_default: true }) });
+    loadTareRulesTable();
+    setStatus('tareRulesStatus', `Regla ${id} marcada como DEFAULT`);
+  } catch(e) { setStatus('tareRulesStatus', e, true); }
+}
+
+async function deactivateTare(id) {
+  if (!confirm('¿Desactivar esta regla de tara?')) return;
+  try {
+    await api(`/config/tare-rules/${id}`, { method: 'DELETE', headers: headers(false) });
+    loadTareRulesTable();
+    setStatus('tareRulesStatus', `Regla ${id} desactivada`);
+  } catch(e) { setStatus('tareRulesStatus', e, true); }
+}
+
+
+
+// ── ASPEL EXCEL SYNC ──────────────────────────────────────────────────────
+$('aspelSyncBtn').onclick = syncAspelExcel;
+$('aspelSyncPathBtn').onclick = syncAspelFromPath;
+
+function _showSyncResult(statusId, data) {
+  const lines = [
+    `✅  ${data.message || 'Sincronización completada'}`,
+    `📊  Filas procesadas: ${data.total_rows}`,
+    `📦  Pedidos creados: ${data.imported_orders}  |  Actualizados: ${data.updated_orders}`,
+    `📋  Líneas creadas: ${data.imported_lines}  |  Actualizadas: ${data.updated_lines}`,
+    `⚠️   Filas con error: ${data.failed_rows}`,
+  ];
+  setStatus(statusId, lines.join('\n'));
+}
+
+async function syncAspelExcel() {
+  const file = $('aspelFile').files[0];
+  if (!file) { setStatus('aspelSyncStatus', 'Selecciona un archivo Excel primero.', true); return; }
+  setStatus('aspelSyncStatus', '⏳ Subiendo y procesando Excel…');
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const response = await fetch(`${state.apiBase}/aspel/sync`, {
+      method: 'POST',
+      headers: state.token ? { 'Authorization': `Bearer ${state.token}` } : {},
+      body: form
+    });
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    if (!response.ok) throw { status: response.status, data };
+    _showSyncResult('aspelSyncStatus', data);
+    loadAspelHistory();
+  } catch (e) { setStatus('aspelSyncStatus', e, true); }
+}
+
+async function syncAspelFromPath() {
+  const statusEl = $('aspelPathSyncStatus');
+  statusEl.style.display = 'block';
+  setStatus('aspelPathSyncStatus', '⏳ Leyendo Excel desde ruta configurada…');
+  try {
+    const data = await api('/aspel/sync-from-path', {
+      method: 'POST',
+      headers: headers(false)
+    });
+    _showSyncResult('aspelPathSyncStatus', data);
+    loadAspelHistory();
+    loadAspelPathStatus();
+  } catch (e) { setStatus('aspelPathSyncStatus', e, true); }
+}
+
+async function loadAspelPathStatus() {
+  try {
+    const d = await api('/aspel/path-status', { headers: headers(false) });
+    const badge = $('aspelPathStatusBadge');
+    if (!d.configured) {
+      badge.style.background = 'rgba(239,68,68,0.08)';
+      badge.style.borderColor = 'rgba(239,68,68,0.3)';
+      badge.innerHTML = `<span style="color:#fca5a5;">⚠️ No configurada</span> — Agrega <code>ASPEL_EXCEL_PATH=…</code> en <code>.env</code> y reinicia el servidor.`;
+    } else if (!d.exists) {
+      badge.style.background = 'rgba(245,158,11,0.08)';
+      badge.style.borderColor = 'rgba(245,158,11,0.3)';
+      badge.innerHTML = `<span style="color:#fcd34d;">⚠️ Ruta configurada pero archivo no encontrado</span><br><code style="font-size:12px;">${d.path}</code>`;
+    } else {
+      badge.style.background = 'rgba(34,197,94,0.08)';
+      badge.style.borderColor = 'rgba(34,197,94,0.3)';
+      badge.innerHTML = `<span style="color:#86efac;">✓ Listo</span> — <code style="font-size:12px;">${d.path}</code><br><span style="font-size:12px;color:var(--muted);">${d.size_mb} MB · modificado ${d.modified}</span>`;
+    }
+  } catch(e) {
+    $('aspelPathStatusBadge').textContent = 'Error al verificar ruta.';
+  }
+}
+
+async function loadAutoSyncStatus() {
+  const badge = $('autoSyncBadge');
+  try {
+    const d = await api('/aspel/auto-sync-status', { headers: headers(false) });
+    if (!d.enabled) {
+      badge.style.background = 'rgba(15,23,42,0.8)';
+      badge.style.borderColor = 'var(--border)';
+      badge.innerHTML = `<span style="color:#94a3b8;">⏸ Desactivado</span> — Configura <code>ASPEL_EXCEL_PATH</code> en <code>.env</code> para activar el auto-sync. El intervalo configurado es <strong>${d.interval_minutes} min</strong>.`;
+    } else {
+      const statusColor = d.last_status === 'ok' ? '#86efac' : d.last_status === 'error' ? '#fca5a5' : '#fcd34d';
+      const statusIcon  = d.last_status === 'ok' ? '✓' : d.last_status === 'error' ? '✗' : '⚠';
+      badge.style.background = 'rgba(34,197,94,0.06)';
+      badge.style.borderColor = 'rgba(34,197,94,0.25)';
+      badge.innerHTML = `
+        <span style="color:#86efac;font-weight:700;">🤖 Activo</span> — sincroniza cada <strong>${d.interval_minutes} min</strong><br>
+        <span style="font-size:12px;color:var(--muted);">
+          Última ejecución: <strong style="color:${statusColor};">${statusIcon} ${d.last_run_at || '—'}</strong>
+          ${d.last_message ? ` — ${d.last_message}` : ''}
+        </span><br>
+        <span style="font-size:12px;color:var(--muted);">Próxima: <strong>${d.next_run_at || '—'}</strong></span>
+      `;
+    }
+  } catch(e) {
+    badge.textContent = 'Error al consultar estado del auto-sync.';
+  }
+}
+
+async function loadAspelHistory() {
+  try {
+    const data = await api('/aspel/imports?limit=20', { headers: headers(false) });
+    const tbody = $('aspelHistoryBody');
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="12" class="muted">Sin sincronizaciones aún.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(r => {
+      const sc = r.status === 'done' ? '#22c55e' : r.status === 'error' ? '#ef4444' : '#f59e0b';
+      const started  = r.started_at  ? new Date(r.started_at).toLocaleString('es-MX')  : '—';
+      const finished = r.finished_at ? new Date(r.finished_at).toLocaleString('es-MX') : '—';
+      const hasErrors = r.failed_rows > 0;
+      const fname = (r.filename || '').length > 28 ? (r.filename || '').substring(0,26)+'…' : (r.filename || '');
+      const srcLabel = r.source === 'configured_path'
+        ? '<span style="color:#a78bfa;font-size:11px;font-weight:700;">📁 Ruta</span>'
+        : r.source === 'auto_scheduler'
+        ? '<span style="color:#34d399;font-size:11px;font-weight:700;">🤖 Auto</span>'
+        : '<span style="color:#38bdf8;font-size:11px;font-weight:700;">📂 Upload</span>';
+      return `<tr>
+        <td>${r.id}</td>
+        <td title="${r.filename || ''}">${fname}</td>
+        <td>${srcLabel}</td>
+        <td><span style="color:${sc};font-weight:700;">${r.status}</span>${r.error_summary ? `<br><span style="font-size:11px;color:#fca5a5;">${r.error_summary.substring(0,60)}</span>` : ''}</td>
+        <td style="font-size:12px;">${started}</td>
+        <td style="font-size:12px;">${finished}</td>
+        <td style="color:#22c55e;font-weight:700;">+${r.imported_orders||0}</td>
+        <td style="color:#38bdf8;">~${r.updated_orders||0}</td>
+        <td style="color:#22c55e;font-weight:700;">+${r.imported_lines||0}</td>
+        <td style="color:#38bdf8;">~${r.updated_lines||0}</td>
+        <td style="color:${hasErrors?'#f59e0b':'#94a3b8'};">${r.failed_rows||0}</td>
+        <td>${hasErrors ? `<button class="btn-warn" style="width:auto;padding:4px 10px;font-size:12px;" onclick="viewImportErrors(${r.id})">Ver errores</button>` : '—'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { setStatus('aspelSyncStatus', e, true); }
+}
+
+async function viewImportErrors(importId) {
+  try {
+    const data = await api(`/aspel/imports/${importId}/rows?status_filter=skipped`, { headers: headers(false) });
+    const card  = $('aspelErrorCard');
+    const tbody = $('aspelErrorBody');
+    $('aspelErrorImportId').textContent = `#${importId}`;
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth' });
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="muted">Sin filas con error en este import.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(r => {
+      const norm = r.normalized_data ? JSON.stringify(r.normalized_data).substring(0, 200) : '—';
+      return `<tr>
+        <td>${r.row_number}</td>
+        <td><span style="color:#f59e0b;font-weight:700;">${r.validation_status}</span></td>
+        <td style="color:#fca5a5;max-width:220px;">${r.validation_errors || '—'}</td>
+        <td style="font-size:11px;font-family:monospace;max-width:280px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${norm}">${norm}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { setStatus('aspelSyncStatus', e, true); }
+}
+
+// ── Operator selection ────────────────────────────────────────────────────
+async function loadOperators() {
+  try {
+    const data = await api('/auth/operators');
+    const sel = $('operatorSelect');
+    sel.innerHTML = '<option value="">— Elige tu nombre —</option>';
+    data.forEach(op => {
+      const opt = document.createElement('option');
+      opt.value = op.user_id;
+      opt.textContent = op.full_name;
+      sel.appendChild(opt);
+    });
+    setStatus('operatorStatus', `${data.length} operador(es) disponibles.`);
+  } catch (e) {
+    setStatus('operatorStatus', 'Error al cargar operadores.', true);
+  }
+}
+
+$('loadOperatorsBtn').onclick = loadOperators;
+$('selectOperatorBtn').onclick = async () => {
+  const userId = $('operatorSelect').value;
+  if (!userId) { setStatus('operatorStatus', 'Selecciona tu nombre primero.', true); return; }
+  try {
+    const data = await api('/auth/select-operator', {
+      method: 'POST', headers: headers(), body: JSON.stringify({ user_id: Number(userId) })
+    });
+    state.token = data.access_token;
+    state.user = data.user;
+    persist();
+    setStatus('operatorStatus', `Bienvenido, ${data.user.full_name}`);
+  } catch (e) { setStatus('operatorStatus', e, true); }
+};
+
+// ── Machine dropdown loader (kept for legacy selects that may still exist) ──
+async function loadMachines() {
+  try {
+    const data = await api('/config/machines', { headers: headers(false) });
+    // Populate any machine selects on the page (for future screens)
+    document.querySelectorAll('select[id$="MachineSelect"]').forEach(sel => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Selecciona máquina —</option>';
+      data.forEach(m => {
+        if (!m.is_active) return;
+        const opt = document.createElement('option');
+        opt.value = m.machine_id;
+        opt.textContent = `${m.machine_name} (${m.machine_code})`;
+        sel.appendChild(opt);
+      });
+      if (current) sel.value = current;
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────
+function rptDateQS() {
+  const params = new URLSearchParams();
+  if ($('rptDateFrom').value.trim()) params.set('date_from', $('rptDateFrom').value.trim());
+  if ($('rptDateTo').value.trim())   params.set('date_to', $('rptDateTo').value.trim());
+  return params.toString();
+}
+
+function showRptPanel(which) {
+  ['ByPi','ByOperator','ByShift'].forEach(p => {
+    const el = $(`rptPanel${p}`);
+    if (el) el.style.display = (p === which) ? 'block' : 'none';
+  });
+}
+
+$('rptByPiBtn').onclick = async () => {
+  showRptPanel('ByPi');
+  try {
+    const data = await api(`/reports/by-pi?${rptDateQS()}`, { headers: headers(false) });
+    // Filtro client-side por PI y cliente
+    const piFilter   = $('rptPay').value.trim().toLowerCase();
+    const custFilter = $('rptCustomer').value.trim().toLowerCase();
+    const filtered   = data.filter(o => {
+      if (piFilter   && !o.sae_order_number.toLowerCase().includes(piFilter))   return false;
+      if (custFilter && !o.customer_name.toLowerCase().includes(custFilter)) return false;
+      return true;
+    });
+    renderByPi(filtered);
+  } catch (e) {
+    $('rptByPiContent').innerHTML = `<div class="status" style="color:#fca5a5;">${JSON.stringify(e)}</div>`;
+  }
+};
+
+$('rptByOperatorBtn').onclick = async () => {
+  showRptPanel('ByOperator');
+  try {
+    const data = await api(`/reports/by-operator?${rptDateQS()}`, { headers: headers(false) });
+    const tbody = $('rptByOperatorBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="muted">Sin datos en el rango seleccionado.</td></tr>'; return; }
+    const total = data.reduce((s, r) => s + r.net_kg, 0);
+    tbody.innerHTML = data.map(r => {
+      const pct = total > 0 ? Math.round(r.net_kg / total * 100) : 0;
+      return `<tr>
+        <td><strong>${r.operator_name}</strong></td>
+        <td>${r.roll_count}</td>
+        <td style="color:var(--muted);">${r.gross_kg.toFixed(3)} kg</td>
+        <td>
+          <strong>${r.net_kg.toFixed(3)} kg</strong>
+          <div style="background:#1f2937;border-radius:4px;height:5px;margin-top:4px;">
+            <div style="width:${pct}%;height:5px;border-radius:4px;background:#38bdf8;"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);">${pct}% del total</span>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    $('rptByOperatorBody').innerHTML = `<tr><td colspan="4" style="color:#fca5a5;">${JSON.stringify(e)}</td></tr>`;
+  }
+};
+
+$('rptByShiftBtn').onclick = async () => {
+  showRptPanel('ByShift');
+  try {
+    const data = await api(`/reports/by-shift?${rptDateQS()}`, { headers: headers(false) });
+    const tbody = $('rptByShiftBody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="muted">Sin datos en el rango seleccionado.</td></tr>'; return; }
+    const total = data.reduce((s, r) => s + r.net_kg, 0);
+    const shiftColors = { T1: '#22c55e', T2: '#38bdf8', T3: '#a78bfa', '—': '#94a3b8' };
+    tbody.innerHTML = data.map(r => {
+      const pct = total > 0 ? Math.round(r.net_kg / total * 100) : 0;
+      const color = shiftColors[r.shift] || '#94a3b8';
+      return `<tr>
+        <td><strong style="font-size:18px;color:${color};">${r.shift}</strong></td>
+        <td>${r.roll_count}</td>
+        <td style="color:var(--muted);">${r.gross_kg.toFixed(3)} kg</td>
+        <td>
+          <strong>${r.net_kg.toFixed(3)} kg</strong>
+          <div style="background:#1f2937;border-radius:4px;height:5px;margin-top:4px;">
+            <div style="width:${pct}%;height:5px;border-radius:4px;background:${color};"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);">${pct}% del total</span>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    $('rptByShiftBody').innerHTML = `<tr><td colspan="4" style="color:#fca5a5;">${JSON.stringify(e)}</td></tr>`;
+  }
+};
+
+$('rptExportCsvBtn').onclick = () => {
+  const url = `${state.apiBase}/reports/export/csv?${rptQueryString()}`;
+  const urlWithToken = state.token ? url + `&__token=${encodeURIComponent(state.token)}` : url;
+  const a = document.createElement('a');
+  a.href = urlWithToken;
+  a.download = 'produccion.csv';
+  a.click();
+};
+
+function renderByPi(data) {
+  const container = $('rptByPiContent');
+  if (!Array.isArray(data) || !data.length) {
+    container.innerHTML = '<div class="status muted">Sin pedidos con datos de producción.</div>';
+    return;
+  }
+  container.innerHTML = data.map(order => {
+    const pct = order.pct_complete != null ? order.pct_complete : 0;
+    const barColor = pct >= 100 ? '#22c55e' : pct >= 75 ? '#38bdf8' : pct >= 40 ? '#f59e0b' : '#ef4444';
+
+    const linesHtml = (order.lines || []).map(line => {
+      const lPct = line.pct_complete != null ? line.pct_complete : null;
+      const lColor = lPct == null ? '#94a3b8' : lPct >= 100 ? '#22c55e' : lPct >= 75 ? '#38bdf8' : '#f59e0b';
+      const bar = lPct != null
+        ? `<div style="background:#1f2937;border-radius:4px;height:5px;margin:4px 0 2px;">
+             <div style="width:${Math.min(lPct,100)}%;height:5px;border-radius:4px;background:${lColor};"></div>
+           </div>`
+        : '';
+      return `<div style="padding:8px 0;border-top:1px solid #1f2937;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
+          <div>
+            <span style="color:var(--muted);font-size:12px;">Línea ${line.line_number}</span>
+            — <strong>${line.product_description || '—'}</strong>
+            ${line.measure ? `<span class="mini"> | ${line.measure}</span>` : ''}
+            ${line.caliber ? `<span class="mini"> | Cal ${line.caliber}</span>` : ''}
+          </div>
+          <div style="text-align:right;white-space:nowrap;">
+            <span style="font-size:13px;">
+              <strong>${line.produced_net_kg.toFixed(1)} kg</strong>
+              ${line.target_kg ? `<span style="color:var(--muted);"> / ${line.target_kg.toFixed(1)} kg</span>` : ''}
+            </span>
+            ${lPct != null ? `<span style="margin-left:8px;font-weight:800;color:${lColor};">${lPct}%</span>` : ''}
+          </div>
+        </div>
+        ${bar}
+        <div class="mini">Rollos: ${line.roll_count} activos${line.cancelled_count ? ` | ${line.cancelled_count} cancelados` : ''}</div>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:rgba(15,23,42,0.9);border:1px solid var(--border);border-radius:18px;padding:16px 20px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:19px;font-weight:800;">${order.sae_order_number}</div>
+          <div style="color:var(--muted);font-size:13px;">
+            ${order.customer_name}
+            ${order.delivery_date ? ' · Entrega: <strong>' + order.delivery_date + '</strong>' : ''}
+            ${order.order_status && order.order_status !== '—' ? ' · Estado: ' + order.order_status : ''}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:26px;font-weight:900;color:${barColor};">${order.pct_complete != null ? order.pct_complete + '%' : '—'}</div>
+          <div style="font-size:12px;color:var(--muted);">
+            ${order.produced_net_kg.toFixed(1)} / ${order.order_target_kg != null ? order.order_target_kg.toFixed(1) : '?'} kg neto
+          </div>
+          <div style="font-size:12px;color:var(--muted);">
+            Rollos: ${order.total_rolls}${order.total_cancelled ? ' | Cancelados: ' + order.total_cancelled : ''}
+          </div>
+        </div>
+      </div>
+      <div style="background:#1f2937;border-radius:8px;height:10px;margin:12px 0 10px;">
+        <div style="width:${Math.min(pct,100)}%;height:10px;border-radius:8px;background:${barColor};transition:width 0.5s;"></div>
+      </div>
+      ${linesHtml}
+    </div>`;
+  }).join('');
+}
+
+// (createItemBtn and checkInBtn removed — use /operator?station=X instead)
+
+// ── Analytics & Datos ───────────────────────────────────────────────────────
+function anDateQS() {
+  const params = new URLSearchParams();
+  const f = $('anDateFrom').value.trim(), t = $('anDateTo').value.trim();
+  if (f) params.set('date_from', f);
+  if (t) params.set('date_to', t);
+  return params.toString();
+}
+
+$('anQuick').onchange = () => {
+  const v = $('anQuick').value;
+  if (v === '') return;
+  const to = new Date();
+  if (v === 'all') { $('anDateFrom').value = ''; $('anDateTo').value = ''; }
+  else {
+    const from = new Date(); from.setDate(to.getDate() - Number(v));
+    $('anDateFrom').value = from.toISOString().slice(0, 10);
+    $('anDateTo').value   = to.toISOString().slice(0, 10);
+  }
+  loadAnalytics();
+};
+
+const RISK_STYLE = {
+  rojo:     { c: '#ef4444', t: 'Rojo' },
+  ambar:    { c: '#f59e0b', t: 'Ámbar' },
+  verde:    { c: '#22c55e', t: 'Verde' },
+  sin_meta: { c: '#94a3b8', t: 'Sin meta' },
+  completo: { c: '#38bdf8', t: 'Completo' },
+};
+
+async function loadAnalytics() {
+  $('anStatus').textContent = 'Cargando analítica…';
+  const qs = anDateQS();
+  try {
+    await Promise.all([loadAnKpis(qs), loadAnRisk(), loadAnQuality(qs), loadAnThroughput(qs), renderAnDatasets()]);
+    $('anStatus').textContent = 'Actualizado ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    $('anStatus').textContent = 'Error: ' + (e.message || e);
+  }
+}
+
+async function loadAnKpis(qs) {
+  const k = await api(`/analytics/kpis?${qs}`, { headers: headers(false) });
+  $('kpiNet').textContent      = k.net_kg.toLocaleString() + ' kg';
+  $('kpiMerma').textContent    = k.merma_tara_pct != null ? k.merma_tara_pct + '%' : '—';
+  $('kpiRolls').textContent    = k.rolls;
+  $('kpiWip').textContent      = `${k.wip_rolls} / ${k.wip_net_kg.toFixed(0)} kg`;
+  $('kpiRej').textContent      = `${k.rejected_net_kg.toFixed(1)} (${k.rejected})`;
+  $('kpiReprints').textContent = k.reprints;
+  $('kpiPallets').textContent  = `${k.open_pallets} (${k.oldest_open_pallet_hours||0}h)`;
+  $('kpiNoTarget').textContent = k.orders_missing_target;
+}
+
+async function loadAnRisk() {
+  const d = await api('/analytics/orders-at-risk', { headers: headers(false) });
+  const sum = d.summary || {};
+  $('anRiskSummary').innerHTML = Object.keys(RISK_STYLE).map(k =>
+    `<span class="pill" style="background:${RISK_STYLE[k].c}22;color:${RISK_STYLE[k].c};border:1px solid ${RISK_STYLE[k].c};">${RISK_STYLE[k].t}: ${sum[k]||0}</span>`
+  ).join('');
+  const body = $('anRiskBody');
+  const rows = (d.orders || []).filter(o => o.risk !== 'completo' && o.risk !== 'sin_meta');
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="9" class="muted">Sin pedidos con riesgo en seguimiento.</td></tr>'; return; }
+  body.innerHTML = rows.map(o => {
+    const rs = RISK_STYLE[o.risk] || RISK_STYLE.verde;
+    const days = o.days_to_delivery != null ? o.days_to_delivery : '—';
+    const daysColor = (o.days_to_delivery != null && o.days_to_delivery < 0) ? '#ef4444' : 'var(--muted)';
+    return `<tr>
+      <td><strong>${o.sae_order_number}</strong></td>
+      <td>${o.customer || '—'}</td>
+      <td>${o.delivery_date || '—'}</td>
+      <td style="color:${daysColor};">${days}</td>
+      <td>${o.pct_complete != null ? o.pct_complete + '%' : '—'}<br><span class="mini">${o.produced_net_kg.toFixed(0)}/${o.target_kg ? o.target_kg.toFixed(0) : '?'} kg</span></td>
+      <td>${o.remaining_kg != null ? o.remaining_kg.toFixed(0) + ' kg' : '—'}</td>
+      <td>${o.recent_rate_kg_day.toFixed(1)} kg/d</td>
+      <td>${o.eta_date || '—'}${o.eta_days != null ? `<br><span class="mini">${o.eta_days} d</span>` : ''}</td>
+      <td><span class="pill" style="background:${rs.c}22;color:${rs.c};border:1px solid ${rs.c};font-weight:700;">${rs.t}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAnQuality(qs) {
+  const d = await api(`/analytics/quality?${qs}`, { headers: headers(false) });
+  const body = $('anQualityBody');
+  if (!d.length) { body.innerHTML = '<tr><td colspan="5" class="muted">Sin datos.</td></tr>'; return; }
+  body.innerHTML = d.map(m => {
+    const sc = m.quality_score;
+    const scColor = sc >= 90 ? '#22c55e' : sc >= 75 ? '#f59e0b' : '#ef4444';
+    return `<tr>
+      <td><strong>${m.machine_name}</strong><br><span class="mini">${m.valid_rolls} rollos</span></td>
+      <td>${m.rejection_rate_pct}%</td>
+      <td>${m.cancel_rate_pct}%</td>
+      <td>${m.reprint_rate_pct}%</td>
+      <td><strong style="color:${scColor};font-size:16px;">${sc}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAnThroughput(qs) {
+  const g = $('anThroughputGroup').value;
+  const sep = qs ? '&' : '';
+  const d = await api(`/analytics/throughput?group=${g}${sep}${qs}`, { headers: headers(false) });
+  const body = $('anThroughputBody');
+  if (!d.length) { body.innerHTML = '<tr><td colspan="4" class="muted">Sin datos.</td></tr>'; return; }
+  body.innerHTML = d.map(r => `<tr>
+    <td><strong>${r.name || '—'}</strong></td>
+    <td>${r.net_kg.toFixed(1)} kg</td>
+    <td><strong>${r.kg_per_hour}</strong></td>
+    <td>${r.rolls_per_hour}</td>
+  </tr>`).join('');
+}
+$('anThroughputGroup').onchange = () => loadAnThroughput(anDateQS());
+
+async function renderAnDatasets() {
+  const list = await api('/analytics/datasets', { headers: headers(false) });
+  $('anDatasets').innerHTML = list.map(ds => `
+    <div style="background:rgba(15,23,42,0.9);border:1px solid var(--border);border-radius:14px;padding:12px;">
+      <div style="font-weight:700;text-transform:capitalize;">${ds.name.replace('_',' ')}</div>
+      <div class="mini" style="margin:4px 0 8px;min-height:32px;">${ds.description}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-muted" style="padding:5px 10px;font-size:12px;" onclick="downloadDataset('${ds.name}','csv')">CSV</button>
+        <button class="btn-muted" style="padding:5px 10px;font-size:12px;" onclick="downloadDataset('${ds.name}','json')">JSON</button>
+      </div>
+    </div>`).join('');
+}
+
+async function downloadDataset(name, format) {
+  const qs = anDateQS();
+  const sep = qs ? '&' : '';
+  const path = `/analytics/export/${name}?format=${format}${sep}${qs}`;
+  await downloadBlob(path, `${name}.${format}`);
+}
+
+// Auth-aware blob download (sends Bearer header, then triggers file save)
+async function downloadBlob(path, filename) {
+  try {
+    const resp = await fetch(`${state.apiBase}${path}`, { headers: headers(false) });
+    if (!resp.ok) throw new Error(`Error ${resp.status}`);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    $('anStatus').textContent = 'Error al descargar: ' + (e.message || e);
+  }
+}
+
+let lastSnapshot = null;
+$('anSnapshotBtn').onclick = async () => {
+  $('anSnapshotOut').textContent = 'Generando…';
+  try {
+    lastSnapshot = await api('/analytics/snapshot', { headers: headers(false) });
+    $('anSnapshotOut').textContent = JSON.stringify(lastSnapshot, null, 2);
+  } catch (e) {
+    $('anSnapshotOut').textContent = 'Error: ' + (e.message || e);
+  }
+};
+$('anSnapshotDownloadBtn').onclick = () => {
+  if (!lastSnapshot) { $('anStatus').textContent = 'Primero genera el snapshot.'; return; }
+  const blob = new Blob([JSON.stringify(lastSnapshot, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `snapshot_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+};
+$('anRefreshBtn').onclick = loadAnalytics;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+persist();
+renderOrderDetail();
+loadOperators();
+loadMachines();
+</script>
+</body>
+</html>

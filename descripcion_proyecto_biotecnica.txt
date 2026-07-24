@@ -1,0 +1,350 @@
+
+El sistema de Biotecnica es una plataforma web de gestion, trazabilidad y control operativo de produccion. Su funcion principal es sustituir el seguimiento manual con hojas de calculo, registros fisicos y comunicacion informal, centralizando la informacion operativa en PostgreSQL.
+
+La aplicacion registra pedidos, lineas de pedido, rollos producidos, pesos, taras, operadores, maquinas, estaciones, impresiones de etiquetas, cancelaciones, reemplazos y tarimas. Con esto mantiene historial trazable de cada movimiento y permite consultar la operacion desde una interfaz web de administrador y una interfaz de operador.
+
+El sistema esta pensado como base para digitalizar progresivamente la planta. Ya incluye integracion con Excel de Aspel, soporte para lectura local de bascula por estacion y reportes operativos. Las siguientes funciones de analitica deberian construirse sobre la base de datos y eventos existentes, no sobre archivos Excel como fuente operacional.
+
+2. Stack y arquitectura
+
+Backend:
+- FastAPI.
+- SQLAlchemy 2.0.
+- PostgreSQL como base de datos principal.
+- Autenticacion con JWT.
+- openpyxl para lectura de Excel de Aspel.
+- Jinja2 para vistas HTML y previews de etiquetas.
+
+Frontend:
+- HTML/Jinja2 en templates.
+- UI admin en templates/index.html.
+- UI operador en templates/operator.html.
+- Previews imprimibles en templates/label_preview.html y templates/pallet_label_preview.html.
+
+Procesos auxiliares:
+- app/scheduler.py ejecuta sincronizacion automatica de Excel Aspel si ASPEL_EXCEL_PATH esta configurado.
+- scale_agent/ es un agente local que corre en la PC de cada estacion y expone lecturas de bascula por HTTP local.
+
+Rutas principales:
+- app/main.py registra los routers de auth, items, labels, pallets, orders, config, reports, imports, aspel_sync, alerts y admin.
+- La aplicacion central corre con uvicorn sobre app.main:app.
+
+3. Entidades principales del modelo
+
+Usuarios y operacion:
+- users: usuarios del sistema, operadores y administradores.
+- stations: estaciones productivas.
+- machines: maquinas asociadas a estaciones.
+
+Pedidos y clientes:
+- clientes: clientes.
+- sales_orders: pedidos importados o creados manualmente. El campo sae_order_number representa el PI/CVE_DOC de Aspel.
+- sales_order_lines: partidas del pedido. Cada linea contiene producto, descripcion, cantidad comercial, target_kg, kg completados y configuracion por defecto de etiqueta/tara.
+
+Produccion y trazabilidad:
+- production_lots: lote de produccion por pedido. Normalmente se autogenera como AUTO-{sae_order_number}.
+- items: unidad producida, usualmente rollo. Guarda item_code, roll_number, barcode_value, etapa, estado, pesos, tara, operador, maquina, turno y enlaces de reemplazo.
+- stage_events: eventos historicos de etapa. Para analitica es una tabla clave porque registra quien hizo que, en que maquina, a que hora, con que peso y en que turno.
+- item_inputs: relacion de insumos usados para producir otro item. Sirve para trazabilidad entre rollos o transformaciones.
+
+Etiquetas:
+- label_print_events: cada impresion o reimpresion de etiqueta. Guarda tipo, branding, modo de peso, peso impreso, usuario, fecha y razon.
+
+Tarimas:
+- pallets: tarimas abiertas o cerradas por pedido. Guarda totales bruto, neto e impreso.
+- pallet_items: relacion rollo-tarima, con usuario y fecha de agregado.
+
+Cancelaciones y calidad:
+- item_cancellations: registro de anulaciones y reemplazos.
+- alerts: alertas operativas.
+- event_corrections: correcciones historicas sobre eventos.
+
+Aspel:
+- aspel_excel_imports: bitacora de cada sincronizacion de Excel.
+- aspel_excel_raw_rows: filas crudas y normalizadas del Excel para auditoria y diagnostico.
+
+Configuracion:
+- tare_rules: reglas de tara configurables. Son importantes porque el neto se calcula desde el bruto menos la tara resuelta.
+- productos: tabla legacy conservada por compatibilidad.
+
+4. Flujo de produccion
+
+El flujo operativo principal se ejecuta con POST /items/produce.
+
+El operador:
+- Selecciona estacion, operador, maquina, PI/pedido, linea de pedido y destino siguiente.
+- Captura peso bruto manualmente o usando el agente local de bascula.
+- Define modo de etiqueta y modo de peso si aplica.
+- Registra el rollo.
+
+El backend:
+- Valida estacion y destino permitido.
+- Valida que la maquina exista y este activa.
+- Valida la linea del pedido.
+- Resuelve o crea el lote de produccion.
+- Calcula la tara.
+- Calcula peso neto = peso bruto - tara.
+- Rechaza la captura si el neto es menor o igual a cero.
+- Define peso impreso segun print_weight_mode: gross o net.
+- Genera item_code tipo IT-YYYYMMDD-000001.
+- Genera roll_number global incremental.
+- Genera barcode_value como {sae_order_number}-{roll_number}.
+- Define estado:
+  - completed si el destino es almacen.
+  - rejected si el destino es reciclaje.
+  - active para flujo productivo intermedio.
+- Guarda el item.
+- Actualiza completed_kg de la linea si el item no fue rechazado.
+- Crea un stage_event tipo produce.
+- Si reemplaza otro rollo, descuenta el peso del rollo anterior, marca el anterior como replaced y enlaza ambos items.
+- Si se indican source_item_codes, registra relaciones en item_inputs.
+
+Estaciones validas:
+- extrusion.
+- corte.
+- impresion.
+- bolseo.
+- almacen.
+- reciclaje.
+
+Transiciones permitidas:
+- extrusion puede mandar a corte, impresion, bolseo, almacen o reciclaje.
+- corte puede mandar a impresion, bolseo, almacen o reciclaje.
+- impresion puede mandar a bolseo, almacen o reciclaje.
+- bolseo puede mandar a almacen o reciclaje.
+- almacen y reciclaje son destinos finales.
+
+Turnos:
+- T1: 06:00 a 13:59.
+- T2: 14:00 a 21:59.
+- T3: 22:00 a 05:59.
+
+5. Reglas de tara y pesos
+
+La tara se resuelve en este orden:
+- Tara manual enviada en el request.
+- tare_rule_id explicito.
+- Regla por defecto de la linea del pedido.
+- bobbin_weight_kg legacy de la linea si require_bobbin_tare esta activo.
+- Regla global por defecto en tare_rules.
+- 0.0 si no hay regla aplicable.
+
+Tipos de regla soportados:
+- fixed: peso fijo.
+- linear_density: densidad lineal por longitud.
+- threshold/manual: actualmente devuelven fixed_weight_kg si esta configurado.
+
+Pesos relevantes:
+- gross_weight: peso bruto capturado.
+- bobbin_weight_kg: tara aplicada.
+- net_weight: peso neto calculado.
+- print_weight_mode: gross o net.
+- printed_weight_kg: peso que aparece en etiqueta.
+
+Para analitica, normalmente el peso mas util para avance real de produccion es net_weight. Sin embargo, algunas vistas tambien reportan gross_weight y printed_weight_kg porque son relevantes para operacion, etiqueta y almacen.
+
+6. Estados importantes de items
+
+Estados usados:
+- active: rollo activo en flujo productivo.
+- completed: rollo terminado y enviado a almacen.
+- rejected: rollo enviado a reciclaje.
+- cancelled: rollo anulado.
+- replaced: rollo reemplazado por otro.
+- palletized: contemplado como estado posible, aunque la logica actual de tarimas usa pallet_items para relacionar rollos.
+
+Reglas criticas:
+- Los items rejected no suman completed_kg.
+- Los items cancelled descuentan completed_kg si antes eran contables.
+- Los items replaced descuentan completed_kg del rollo anterior si correspondia.
+- No se puede cancelar un rollo que ya esta dentro de una tarima cerrada.
+- No se puede agregar a tarima un rollo cancelled, replaced o rejected.
+
+7. Flujo de tarimas
+
+Las tarimas se gestionan desde /pallets.
+
+Flujo:
+- Crear tarima por pedido.
+- Agregar rollos escaneando item_code o barcode_value.
+- Validar que el rollo pertenezca al mismo PI/pedido.
+- Evitar duplicados en la misma u otra tarima.
+- Recalcular totales bruto, neto e impreso cada vez que se agrega un rollo.
+- Cerrar tarima cuando ya tiene rollos.
+- Generar preview de etiqueta de tarima.
+
+Una tarima cerrada no admite nuevos rollos. Las cancelaciones de rollos dentro de tarimas cerradas tambien estan bloqueadas.
+
+8. Integracion con Aspel
+
+Aspel se integra por Excel, no por API directa pero ese excel se actualiza solito jalando pedidos de aspel.
+
+Endpoints:
+- POST /aspel/sync: sincronizacion manual subiendo archivo.
+- POST /aspel/sync-from-path: sincronizacion leyendo ASPEL_EXCEL_PATH configurado en .env.
+- GET /aspel/path-status: valida ruta configurada.
+- GET /aspel/auto-sync-status: estado del scheduler.
+- GET /aspel/imports: historial de importaciones.
+- GET /aspel/imports/{id}/rows: filas importadas, con errores o normalizacion.
+
+El parser esta en app/services/aspel_parser.py.
+
+Reglas importantes del Excel:
+- CVE_DOC se mapea a sae_order_number.
+- CVE_ART se mapea a product_code.
+- DESCR se mapea a product_description.
+- NOMBRE CLIENTE se mapea a customer_name.
+- CANT se mapea a quantity_ordered, pero NO son kg.
+- KILOSxPARTIDA se mapea a target_kg y puede venir vacio.
+- FECHA_DOC y FECHA_ENT se convierten a fechas.
+- CALLE se mapea a shipping_address.
+- La sincronizacion es idempotente: debe poder ejecutarse multiples veces sin duplicar pedidos ni lineas.
+- Se guardan filas crudas en aspel_excel_raw_rows para auditoria.
+- Los errores por fila no deben detener todo el proceso.
+
+Para analitica, Aspel aporta la meta comercial y de kg por pedido/linea. La produccion real debe salir de items y stage_events.
+
+9. Reportes existentes
+
+app/routes/reports.py ya contiene una primera base de analitica operativa:
+
+- GET /reports/summary:
+  Devuelve conteo de items, kg brutos, kg netos, reimpresiones y cancelaciones, con filtros por PI, cliente, maquina, operador, etapa, fechas e include_cancelled.
+
+- GET /reports/export/csv:
+  Exporta datos de produccion a CSV con pesos, operador, maquina, estado, etiqueta y cancelacion.
+
+- GET /reports/by-pi:
+  Reporta avance por pedido y por linea. Calcula kg producidos vs target_kg, rollos activos y cancelados. Excluye cancelled, replaced y rejected para avance real.
+
+- GET /reports/by-operator:
+  Agrupa rollos y kg por operador.
+
+- GET /reports/by-shift:
+  Agrupa rollos y kg por turno.
+
+Estos reportes son utiles como referencia, pero actualmente hacen muchas consultas por item en loops. Si se agregan analiticas mas pesadas, conviene optimizar con joins, agregaciones SQL, indices o vistas/materialized views.
+
+10. Agente local de bascula
+
+scale_agent/ corre en cada PC de estacion y expone http://127.0.0.1:8787.
+
+Endpoints del agente:
+- GET /health.
+- GET /ports.
+- GET /weight.
+- POST /config.
+- POST /debug/simulate-weight.
+
+La UI operador consulta la bascula local y permite copiar el peso al campo de peso bruto. El registro no es automatico: el operador siempre debe confirmar con REGISTRAR. Esto es importante para trazabilidad y responsabilidad operativa.
+
+Para analitica futura, el peso que queda como dato oficial es el registrado en PostgreSQL por /items/produce, no cada lectura cruda de la bascula.
+
+11. Logica de etiquetas
+
+Las etiquetas de rollo y tarima se previsualizan en HTML.
+
+Rollo:
+- label_type: roll.
+- branding_mode: normal o distributor.
+- print_weight_mode: gross o net.
+- printed_weight_kg: peso que se imprimio.
+
+Tarima:
+- label_type: pallet.
+- summary_by_line agrupa contenido por linea de pedido.
+
+Cada impresion queda registrada en label_print_events. Las reimpresiones son permitidas y quedan marcadas con is_reprint=True. Para analitica, esta tabla permite medir reimpresiones, errores operativos, frecuencia por operador y trazabilidad documental.
+
+12. Puntos clave para agregar analitica
+
+Fuentes principales:
+- items: unidad base de produccion.
+- stage_events: historial operacional por evento.
+- sales_orders y sales_order_lines: objetivos, cliente, producto y contexto comercial.
+- pallets y pallet_items: cierre logistico y agrupacion de almacen.
+- label_print_events: actividad de impresion/reimpresion.
+- item_cancellations: anulaciones y motivos.
+- aspel_excel_imports y aspel_excel_raw_rows: calidad de sincronizacion Aspel.
+
+Metricas recomendadas:
+- Kg netos producidos por dia, turno, operador, maquina, estacion, producto, cliente y PI.
+- Kg brutos vs netos para controlar impacto de tara.
+- Avance por PI y linea: produced_net_kg / target_kg.
+- Rollos por hora, por turno y por maquina.
+- Cancelaciones por motivo, operador, estacion y periodo.
+- Rechazos a reciclaje por estacion, maquina, producto y turno.
+- Reemplazos y perdida/recuperacion de kg.
+- Reimpresiones por operador y por PI.
+- Tarimas abiertas por tiempo, tarimas cerradas por dia y kg por tarima.
+- Pedidos con target_kg faltante desde Aspel.
+- Errores de importacion Aspel por archivo, fila y campo.
+
+Reglas de conteo para analitica:
+- Para produccion valida, excluir cancelled, replaced y rejected salvo que la metrica mida especificamente anulaciones, reemplazos o rechazos.
+- Para avance contra pedido, usar net_weight y target_kg.
+- No usar CANT de Aspel como kilos.
+- Si target_kg esta vacio, no bloquear ni forzar porcentaje; reportar avance sin meta o marcar como "sin objetivo kg".
+- Para historico de eventos, usar stage_events.event_timestamp.
+- Para produccion creada, usar items.created_at.
+- Para tarimas, usar pallets.created_at y pallets.closed_at segun la metrica.
+
+13. Consideraciones de performance
+
+La base actual de reportes funciona para MVP, pero algunas rutas hacen consultas repetidas dentro de loops. Para analitica nueva conviene:
+- Usar joins explicitos entre items, sales_order_lines, sales_orders, clientes, users, machines y pallets.
+- Agregar indices en campos usados por filtros: created_at, status, current_stage, sales_order_line_id, created_by_user_id, machine_id, shift, sae_order_number.
+- Evitar recalcular todo si se hacen dashboards en tiempo real.
+- Considerar vistas SQL o materialized views para KPIs agregados por dia/turno.
+- Mantener compatibilidad con las reglas de cancelacion/reemplazo para no inflar kg producidos.
+
+14. Parte agentica y automatizacion futura
+
+El proyecto ya tiene dos bases para automatizacion:
+- Scheduler de Aspel: puede sincronizar automaticamente el archivo configurado.
+- Agente de bascula: conecta hardware local con la UI sin exponer la bascula a la red.
+
+La capa agentica futura podria construirse como servicios que observen eventos y generen recomendaciones, alertas o analisis:
+- Agente de analitica: calcula KPIs, detecta desviaciones y genera resumen diario.
+- Agente de calidad: detecta patrones de cancelacion, rechazo o reimpresion por maquina/turno.
+- Agente de planeacion: compara target_kg vs produced_net_kg y prioriza PIs atrasados.
+- Agente de integracion: monitorea el archivo Aspel, errores de filas y cambios de pedidos.
+- Agente de planta: consume lecturas futuras de sensores o equipos y las relaciona con stage_events.
+
+Estos agentes no deberian modificar datos productivos sin reglas explicitas. Lo recomendable es que escriban en tablas de insights, alertas o bitacoras, y que las acciones operativas sigan pasando por endpoints validados.
+
+15. Archivos importantes para revisar antes de desarrollar
+
+- app/main.py: registro de la app, routers, UI y scheduler.
+- app/models.py: definicion completa de tablas.
+- app/schemas.py: contratos de request/response.
+- app/db.py: conexion a PostgreSQL.
+- app/auth.py y app/routes/auth.py: autenticacion y permisos.
+- app/routes/items.py: produccion, cancelacion, historial y reglas de peso.
+- app/routes/pallets.py: tarimas y etiquetas de tarima.
+- app/routes/labels.py: impresion, reimpresion y preview de etiquetas.
+- app/routes/orders.py: consulta de pedidos por SAE/PI.
+- app/routes/config.py: maquinas, estaciones y reglas de tara.
+- app/routes/reports.py: reportes actuales y punto natural para analitica.
+- app/routes/aspel_sync.py: sincronizacion de Aspel.
+- app/services/aspel_parser.py: normalizacion y parseo del Excel.
+- app/scheduler.py: autosync de Aspel.
+- scale_agent/scale_agent.py: agente local de bascula.
+- templates/index.html: panel admin.
+- templates/operator.html: UI operador.
+- migrations/: cambios de esquema aplicados.
+
+16. Advertencias para el nuevo desarrollo
+
+- No recrear ni dropear el esquema de base de datos.
+- No depender de Excel como fuente operacional de produccion.
+- No contar CANT como kg.
+- No ignorar cancelaciones, reemplazos o rechazos al calcular produccion valida.
+- No asumir que target_kg siempre existe.
+- No cambiar reglas de tara sin revisar impacto en net_weight y completed_kg.
+- No hacer registro automatico desde la bascula sin confirmacion del operador.
+- No modificar datos productivos desde una capa agentica sin permisos, auditoria y reglas de negocio.
+
+17. Resumen corto
+
+Biotecnica MVP es una plataforma FastAPI/PostgreSQL para trazabilidad de produccion. El dato central es el item o rollo producido, vinculado a un pedido Aspel, una linea de pedido, una maquina, un operador, una estacion, pesos, tara, etiqueta y estado. Los movimientos quedan historizados en stage_events y los cierres logisticos en pallets/pallet_items. Aspel alimenta pedidos y metas; la produccion real nace en /items/produce. La analitica debe construirse sobre items, stage_events, sales_order_lines, pallets y eventos auxiliares, respetando las reglas de estados, cancelaciones, reemplazos, rechazos y target_kg nullable.

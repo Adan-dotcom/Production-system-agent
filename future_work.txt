@@ -1,0 +1,3 @@
+Future work
+
+- Objetivos de kg: CANT de Aspel es cantidad comercial y puede representar kg, piezas u otra unidad segun cliente/producto. No usar CANT como meta kg global. Homogeneizar una fuente/regla confiable para llenar target_kg antes de depender de analiticas de avance, ETA y riesgo.

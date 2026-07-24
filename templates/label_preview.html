@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Etiqueta {{ item.item_code }}</title>
+  <style>
+    /* ── Stock de etiqueta: 4 x 3 pulgadas (landscape) ── */
+    @page { size: 4in 3in; margin: 0; }
+
+    body { font-family: Arial, Helvetica, sans-serif; background: #e5e7eb; margin: 0; padding: 18px; }
+    .sheet { display: flex; justify-content: center; }
+
+    .label {
+      box-sizing: border-box;
+      width: 4in; height: 3in;
+      padding: 0.10in 0.14in;
+      color: #111827; position: relative; overflow: hidden;
+      border: 2px solid {% if branding_mode == 'distributor' %}#1e40af{% else %}#234d1f{% endif %};
+      background: {% if branding_mode == 'distributor' %}#eff6ff{% else %}#ffffff{% endif %};
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    /* ── Header ── */
+    .header { display: flex; justify-content: space-between; align-items: flex-start;
+              border-bottom: 1.5px solid {% if branding_mode == 'distributor' %}#1e40af{% else %}#234d1f{% endif %};
+              padding-bottom: 4px; }
+    .brand-block { display: flex; align-items: center; gap: 6px; }
+    .logo { height: 0.42in; width: auto; object-fit: contain; }
+    .stage { font-size: 13px; font-weight: 900; letter-spacing: .04em;
+             color: {% if branding_mode == 'distributor' %}#1e3a8a{% else %}#065f46{% endif %}; line-height: 1.05; }
+    .stage small { display: block; font-size: 8px; font-weight: 700; color: #6b7280; letter-spacing: .12em; }
+    .code-block { text-align: right; }
+    .rollo { font-size: 17px; font-weight: 900; line-height: 1; }
+    .rollnum { font-size: 9px; color: #374151; }
+    .reprint-warn { background: #ef4444; color: white; font-size: 8px; font-weight: 800;
+                    padding: 1px 6px; border-radius: 3px; margin-top: 2px; display: inline-block; }
+
+    /* ── Body ── */
+    .body { display: flex; gap: 8px; margin-top: 5px; }
+    .info { flex: 1.5; min-width: 0; }
+    .row { font-size: 9.5px; line-height: 1.35; }
+    .row strong { display: inline-block; min-width: 52px; color: #374151; }
+    .right { flex: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; }
+
+    .big-kg { font-size: 30px; font-weight: 900; color: #065f46; line-height: 1; text-align: right; }
+    .big-kg small { font-size: 11px; font-weight: 700; color: #374151; }
+    .breakdown { font-size: 8px; color: #6b7280; text-align: right; margin-top: 2px; }
+
+    /* ── Footer / barcode ── */
+    .footer { position: absolute; left: 0.14in; right: 0.14in; bottom: 0.10in;
+              display: flex; justify-content: space-between; align-items: flex-end; }
+    .barcode img { height: 0.42in; width: auto; object-fit: fill; background: white; }
+    .barcode .val { font-size: 8px; font-family: monospace; text-align: center; margin-top: -1px; }
+    .print-meta { font-size: 8px; color: #374151; text-align: right; }
+    .mode-badge { display:inline-block; font-size: 8px; font-weight: 800; padding: 1px 6px; border-radius: 3px;
+                  background: {% if branding_mode == 'distributor' %}#1e40af{% else %}#065f46{% endif %}; color: white; }
+
+    .btns { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+    button { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .print-btn { background: #111827; color: white; }
+    .back-btn  { background: #d1d5db; }
+
+    @media print {
+      .btns { display: none; }
+      body { background: white; padding: 0; }
+      .label { box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="sheet">
+  <div class="label">
+
+    <!-- ── HEADER ── -->
+    <div class="header">
+      <div class="brand-block">
+        {% if branding_mode != 'distributor' %}
+        <img class="logo" src="{{ logo_url }}" alt="Biotécnica" />
+        <div class="stage">{{ stage_label }}<small>BIOTÉCNICA</small></div>
+        {% else %}
+        <div class="stage" style="font-size:12px;">DISTRIBUIDOR<small>ETIQUETA DE PRODUCTO</small></div>
+        {% endif %}
+      </div>
+      <div class="code-block">
+        {% if branding_mode != 'distributor' %}
+        <div class="rollo">{{ item.item_code }}</div>
+        {% if item.roll_number %}<div class="rollnum">Rollo #{{ item.roll_number }}</div>{% endif %}
+        {% else %}
+        <span class="mode-badge">DISTRIBUIDOR</span>
+        {% endif %}
+        {% if is_reprint %}<div class="reprint-warn">REIMPRESIÓN #{{ print_number }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ── BODY ── -->
+    <div class="body">
+      <div class="info">
+        {% if branding_mode != 'distributor' %}
+        <div class="row"><strong>CLIENTE:</strong> {{ customer.name if customer else '—' }}</div>
+        {% endif %}
+        <div class="row"><strong>PRODUCTO:</strong> {{ line.product_description if line else '—' }}</div>
+        <div class="row"><strong>MEDIDA:</strong> {{ line.measure if (line and line.measure) else '—' }}
+          &nbsp;<strong style="min-width:auto;">CAL:</strong> {{ line.caliber if (line and line.caliber) else '—' }}</div>
+        {% if line and line.color %}<div class="row"><strong>COLOR:</strong> {{ line.color }}</div>{% endif %}
+        <div class="row"><strong>PI/PAY:</strong> {{ order.sae_order_number if order else '—' }}
+          {% if line %}&nbsp;<strong style="min-width:auto;">LÍN:</strong> {{ line.line_number }}{% endif %}</div>
+        <div class="row"><strong>FECHA:</strong> {{ item.created_at.strftime('%d/%m/%Y') if item.created_at else '' }}</div>
+        {% if branding_mode != 'distributor' %}
+        <div class="row">
+          {% if item.shift %}<strong>TURNO:</strong> {{ item.shift }}{% endif %}
+          {% if machine %}&nbsp;<strong style="min-width:auto;">MÁQ:</strong> {{ machine.machine_name }}{% endif %}
+        </div>
+        {% if operator %}<div class="row"><strong>OPER:</strong> {{ operator.full_name }}</div>{% endif %}
+        {% endif %}
+      </div>
+
+      <div class="right">
+        <div class="big-kg">
+          {{ '%.3f'|format(printed_weight_kg) }}<small> KG</small>
+          <div style="font-size:10px; font-weight:700; color:#374151;">
+            ({{ 'BRUTO' if print_weight_mode == 'gross' else 'NETO' }})
+          </div>
+        </div>
+        {% if branding_mode != 'distributor' and item.bobbin_weight_kg %}
+        <div class="breakdown">
+          Bruto {{ '%.3f'|format(item.gross_weight or 0) }} · Tara {{ '%.3f'|format(item.bobbin_weight_kg) }} · Neto {{ '%.3f'|format(item.net_weight or 0) }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── FOOTER ── -->
+    <div class="footer">
+      <div class="barcode">
+        <img src="{{ barcode_path }}" alt="Barcode {{ item.barcode_value or item.item_code }}" />
+        <div class="val">{{ item.barcode_value or item.item_code }}</div>
+      </div>
+      <div class="print-meta">
+        <div><strong>{{ 'REIMP.' if is_reprint else 'IMP.' }} #{{ print_number }}</strong></div>
+        <div>APROBADO ✓</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="btns">
+  <button class="print-btn" onclick="window.print()">🖨 Imprimir</button>
+  <button class="back-btn" onclick="window.history.back()">← Volver</button>
+</div>
+<script>
+  if (new URLSearchParams(window.location.search).get("autoprint") === "1") {
+    window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+  }
+</script>
+</body>
+</html>

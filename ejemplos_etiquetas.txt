@@ -1,0 +1,161 @@
+================================================================================
+  EJEMPLOS DE ETIQUETAS — Biotécnica MVP
+  Stock físico: 4 x 3 pulgadas (rollo)  |  4 in de ancho, alto variable (tarima)
+  Barcode: generado en el SERVIDOR (Code128 PNG) — ya NO depende del CDN/internet
+================================================================================
+
+
+--------------------------------------------------------------------------------
+ 1) ETIQUETA DE ROLLO — modo NORMAL (no distribuidor) — etapa EXTRUSIÓN
+    * Lleva logo arriba a la izquierda + título de la etapa
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | [LOGO]  EXTRUSIÓN                              BIO-1024-3     |
+  |         BIOTÉCNICA                             Rollo #3       |
+  +--------------------------------------------------------------+
+  | CLIENTE:  Bimbo S.A. de C.V.                                  |
+  | PRODUCTO: Bolsa polietileno natural             ┌──────────┐ |
+  | MEDIDA:   30x40   CAL: 200                       │  12.345  │ |
+  | PI/PAY:   1024    LÍN: 2                         │   KG     │ |
+  | FECHA:    16/06/2026                             │ (NETO)   │ |
+  | TURNO:    T1   MÁQ: Extrusora 1                  └──────────┘ |
+  | OPER:     Juan Pérez                Bruto 13.100·Tara 0.755·  |
+  |                                     Neto 12.345              |
+  |                                                              |
+  | ||||||| |||| || ||||              IMP. #1                    |
+  | BIO-1024-3                        APROBADO ✓                 |
+  +--------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+ 2) ETIQUETA DE ROLLO — modo NORMAL — etapa CORTE
+    * Mismo formato; cambia SOLO el título de etapa
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | [LOGO]  CORTE                                  BIO-1024-7     |
+  |         BIOTÉCNICA                             Rollo #7       |
+  +--------------------------------------------------------------+
+  | CLIENTE:  Bimbo S.A. de C.V.                                  |
+  | PRODUCTO: Bolsa polietileno natural             ┌──────────┐ |
+  | MEDIDA:   30x40   CAL: 200                       │  18.900  │ |
+  | PI/PAY:   1024    LÍN: 2                         │   KG     │ |
+  | FECHA:    16/06/2026                             │ (BRUTO)  │ |
+  | TURNO:    T2   MÁQ: Cortadora 3                  └──────────┘ |
+  | OPER:     María López                                        |
+  |                                                              |
+  | ||||||| |||| || ||||              IMP. #1                    |
+  | BIO-1024-7                        APROBADO ✓                 |
+  +--------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+ 3) ETIQUETA DE ROLLO — modo NORMAL — etapa PRODUCTO TERMINADO (almacen)
+    * El título "PRODUCTO TERMINADO" ahora SOLO aparece en la etapa de almacén
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | [LOGO]  PRODUCTO TERMINADO                     BIO-1024-9     |
+  |         BIOTÉCNICA                             Rollo #9       |
+  +--------------------------------------------------------------+
+  | CLIENTE:  Bimbo S.A. de C.V.                                  |
+  | PRODUCTO: Bolsa polietileno natural             ┌──────────┐ |
+  | MEDIDA:   30x40   CAL: 200                       │  20.115  │ |
+  | COLOR:    Natural                                │   KG     │ |
+  | PI/PAY:   1024    LÍN: 2                         │ (NETO)   │ |
+  | FECHA:    16/06/2026                             └──────────┘ |
+  | TURNO:    T3   MÁQ: Bolseadora 1    Bruto 21.000·Tara 0.885· |
+  | OPER:     Pedro Ruiz                Neto 20.115              |
+  |                                                              |
+  | ||||||| |||| || ||||              IMP. #1                    |
+  | BIO-1024-9                        APROBADO ✓                 |
+  +--------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+ 4) ETIQUETA DE ROLLO — modo DISTRIBUIDOR
+    * SIN logo, SIN etapa, SIN datos internos (cliente/operador/máquina/turno/
+      código interno/desglose de tara). Fondo azul claro.
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | DISTRIBUIDOR                                   [DISTRIBUIDOR] |
+  | ETIQUETA DE PRODUCTO                                          |
+  +--------------------------------------------------------------+
+  | PRODUCTO: Bolsa polietileno natural             ┌──────────┐ |
+  | MEDIDA:   30x40   CAL: 200                       │  20.115  │ |
+  | COLOR:    Natural                                │   KG     │ |
+  | PI/PAY:   1024    LÍN: 2                         │ (NETO)   │ |
+  | FECHA:    16/06/2026                             └──────────┘ |
+  |                                                              |
+  | ||||||| |||| || ||||              IMP. #1                    |
+  | 1024-9                            APROBADO ✓                 |
+  +--------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+ 5) ETIQUETA DE ROLLO — REIMPRESIÓN (badge rojo de aviso)
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | [LOGO]  CORTE                                  BIO-1024-7     |
+  |         BIOTÉCNICA                             Rollo #7       |
+  |                                              [REIMPRESIÓN #2] |
+  +--------------------------------------------------------------+
+  | ...mismos campos...                            REIMP. #2     |
+  +--------------------------------------------------------------+
+
+
+--------------------------------------------------------------------------------
+ 6) ETIQUETA DE TARIMA / PALLET (4 in ancho, alto crece con los rollos)
+    * Logo + barcode del SERVIDOR (sin CDN) + resumen por línea + tabla de rollos
+--------------------------------------------------------------------------------
+
+  +--------------------------------------------------------------+
+  | [LOGO] Biotécnica                          PAL-20260616-00007|
+  |        TARIMA / PALLET                                        |
+  +--------------------------------------------------------------+
+  |              |||||| |||| || |||||| |||| ||                   |
+  |                  PAL-20260616-00007                          |
+  |                                                              |
+  | PEDIDO (PI):  1024                                           |
+  | CLIENTE:      Bimbo S.A. de C.V.                             |
+  | FECHA:        16/06/2026 14:30 · CERRADA: 16/06/2026 15:10   |
+  |                                                              |
+  | 240.750 KG BRUTO                                             |
+  | Peso neto total: 231.400 kg                                 |
+  | TOTAL ROLLOS: 12                                            |
+  |                                                              |
+  | CONTENIDO POR LÍNEA                                          |
+  | ┌──────────────────────────────────────────────────────┐   |
+  | │ Bolsa polietileno natural                             │   |
+  | │ Medida: 30x40 · Calibre: 200 · Color: Natural         │   |
+  | │ 12 rollo(s)   Bruto 240.750 kg   Neto 231.400 kg      │   |
+  | └──────────────────────────────────────────────────────┘   |
+  |                                                              |
+  | Código     Barcode    Bruto    Tara    Neto                |
+  | BIO-1024-1 1024-1     20.100   0.880   19.220             |
+  | BIO-1024-2 1024-2     20.050   0.870   19.180             |
+  | ...                                                         |
+  +--------------------------------------------------------------+
+
+
+================================================================================
+  NOTAS DE LOS CAMBIOS
+================================================================================
+  - Título de etapa: extrusion→EXTRUSIÓN, corte→CORTE, impresion→IMPRESIÓN,
+    bolseo→BOLSEO, almacen→PRODUCTO TERMINADO, reciclaje→RECICLAJE.
+    SOLO se muestra en etiquetas modo NORMAL (no distribuidor).
+  - Logo (logobiotecnica.jpg) copiado a static/ y servido en /static/logobiotecnica.jpg.
+    Aparece arriba a la izquierda SOLO en etiquetas NORMAL y de TARIMA.
+  - Barcode de tarima ahora se genera en el servidor (igual que el de rollo),
+    ya no usa el CDN de JsBarcode → funciona sin internet en planta.
+  - Tamaño de etiqueta de rollo fijo a 4x3 in (@page size: 4in 3in).
+  - La etiqueta de tarima usa 4 in de ancho y alto automático, porque el número
+    de rollos por tarima es variable y no cabe en un alto fijo de 3 in.
+
+  Para ver una etiqueta real en el navegador:
+    Rollo : http://localhost:8000/labels/{item_code}/preview
+    Tarima: http://localhost:8000/pallets/{pallet_code}/preview
+================================================================================

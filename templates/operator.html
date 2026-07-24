@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Registro — Biotécnica</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #dde1e7;
+      --surface: #f4f5f7;
+      --white:   #ffffff;
+      --border:  #b8bec8;
+      --border2: #dde1e7;
+      --accent:  #b91c1c;
+      --adk:     #7f1d1d;
+      --alt:     #fee2e2;
+      --blue:    #1a4490;
+      --blt:     #e0eaff;
+      --text:    #1a1f2e;
+      --muted:   #5a6478;
+      --lbl:     #2d3748;
+      --green:   #065f46;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; font-size:15px; }
+
+    /* HEADER */
+    header { background:var(--white); border-bottom:3px solid var(--accent); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 4px rgba(0,0,0,.08); flex-wrap:wrap; gap:8px; }
+    .hdr-left { display:flex; align-items:center; gap:12px; }
+    .hdr-brand { font-size:19px; font-weight:900; color:var(--accent); letter-spacing:.5px; }
+    .hdr-station { background:var(--accent); color:#fff; font-size:12px; font-weight:800; padding:4px 14px; border-radius:4px; letter-spacing:2px; text-transform:uppercase; }
+    .hdr-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    #shiftBadge { background:var(--alt); color:var(--adk); font-weight:800; font-size:12px; padding:4px 12px; border-radius:4px; border:1px solid #fca5a5; }
+    #clock { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; }
+    .hdr-btn { padding:7px 14px; border:none; border-radius:5px; font-size:13px; font-weight:700; cursor:pointer; }
+    .hdr-btn.blue  { background:var(--blue); color:#fff; }
+    .hdr-btn.amber { background:#92400e; color:#fff; }
+
+    /* MAIN */
+    main { flex:1; display:flex; justify-content:center; padding:18px 12px; }
+    .card { background:var(--white); border:1px solid var(--border); border-radius:9px; padding:20px 22px; width:100%; max-width:580px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+
+    /* SECTIONS */
+    .sect { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin:16px 0 9px; border-bottom:1px solid var(--border2); padding-bottom:3px; }
+    .sect:first-child { margin-top:0; }
+
+    /* FIELDS */
+    .f { margin-bottom:10px; }
+    .f label { display:block; font-size:12px; font-weight:700; color:var(--lbl); margin-bottom:4px; text-transform:uppercase; letter-spacing:.5px; }
+    .f input, .f select { width:100%; border:1px solid var(--border); border-radius:5px; padding:9px 11px; font-size:15px; font-weight:600; color:var(--text); background:var(--white); }
+    .f input:focus, .f select:focus { border-color:var(--accent); outline:none; box-shadow:0 0 0 2px rgba(185,28,28,.1); }
+    .f input[readonly] { background:#f0f1f3; color:var(--muted); }
+
+    /* INLINE ROW */
+    .row2 { display:flex; gap:8px; align-items:flex-end; }
+    .row2 .f { flex:1; margin-bottom:0; }
+    .sbtn { padding:9px 16px; border:none; border-radius:5px; background:var(--accent); color:#fff; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .sbtn:disabled { opacity:.5; cursor:not-allowed; }
+    .sbtn.blue { background:var(--blue); }
+
+    /* INFO STRIP */
+    .strip { display:none; border-radius:5px; padding:8px 12px; font-size:13px; line-height:1.9; margin-top:8px; }
+    .strip.green { background:var(--alt); border:1px solid #fca5a5; }
+    .strip.blue  { background:var(--blt); border:1px solid #99b8f0; }
+    .strip strong { font-size:11px; text-transform:uppercase; min-width:80px; display:inline-block; letter-spacing:.5px; }
+
+    /* PROGRESO POR ÍTEM (vs CANT) */
+    #piProgress { display:none; margin-top:10px; }
+    .prog-title { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin:0 0 7px; }
+    .prog-item { border:1px solid var(--border); border-radius:7px; padding:9px 11px; margin-bottom:8px; background:var(--white); }
+    .prog-item.active { border-color:var(--blue); box-shadow:0 0 0 2px rgba(26,68,144,.12); }
+    .prog-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:5px; }
+    .prog-name { font-size:13px; font-weight:700; color:var(--ink,#1a1f2b); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .prog-name .ln { color:var(--muted); font-weight:800; margin-right:4px; }
+    .prog-pct { font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .prog-bar { height:14px; border-radius:7px; background:#e5e7eb; overflow:hidden; }
+    .prog-fill { height:100%; border-radius:7px; transition:width .35s ease; min-width:2px; }
+    .prog-fill.low  { background:#dc2626; }
+    .prog-fill.mid  { background:#f59e0b; }
+    .prog-fill.high { background:#2563eb; }
+    .prog-fill.done { background:#16a34a; }
+    .prog-fill.over { background:#9333ea; }
+    .prog-nums { font-size:11px; color:var(--muted); margin-top:5px; font-variant-numeric:tabular-nums; }
+    .prog-nums b { color:var(--ink,#1a1f2b); }
+    .prog-flag { font-size:11px; font-weight:800; margin-left:6px; }
+    .prog-flag.done { color:#16a34a; }
+    .prog-flag.over { color:#9333ea; }
+    .prog-noCant { font-size:11px; color:var(--muted); font-style:italic; }
+
+    /* LINE SELECTOR */
+    #lineNotice { display:none; font-size:12px; font-weight:700; color:var(--accent); margin:8px 0 4px; }
+
+    /* LABEL OPTIONS */
+    .label-opts-row { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+    .check-lbl { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:700; color:var(--lbl); cursor:pointer; user-select:none; }
+    .check-lbl input[type=checkbox] { width:18px; height:18px; cursor:pointer; accent-color:var(--blue); }
+    .radio-group { display:flex; gap:6px; }
+    .radio-opt { display:flex; align-items:center; gap:5px; font-size:14px; font-weight:700; color:var(--lbl); cursor:pointer; }
+    .radio-opt input[type=radio] { width:17px; height:17px; cursor:pointer; accent-color:var(--accent); }
+    .label-preview-badge { font-size:11px; font-weight:800; padding:3px 10px; border-radius:4px; margin-left:4px; }
+    .badge-normal     { background:#dcfce7; color:#166534; }
+    .badge-distributor { background:#dbeafe; color:#1e40af; }
+
+    /* BIG WEIGHT */
+    .bigw { width:100%; font-size:52px !important; font-weight:900 !important; text-align:center !important; letter-spacing:3px; border:2px solid var(--border) !important; border-radius:7px !important; padding:10px 14px !important; color:var(--accent) !important; background:#f8f9fa !important; font-variant-numeric:tabular-nums; }
+    .bigw:focus { border-color:var(--accent) !important; background:var(--white) !important; outline:none !important; box-shadow:0 0 0 3px rgba(185,28,28,.12) !important; }
+    #netInfo { text-align:center; font-size:13px; color:var(--muted); margin-top:3px; min-height:18px; }
+
+    /* DESTINATION */
+    .dest-grid { display:flex; flex-wrap:wrap; gap:7px; margin-top:4px; }
+    .dest-btn { flex:1; min-width:105px; padding:12px 8px; border:2px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text); font-size:13px; font-weight:700; cursor:pointer; text-align:center; text-transform:uppercase; letter-spacing:.5px; }
+    .dest-btn:hover { border-color:var(--accent); background:var(--alt); }
+    .dest-btn.selected { border-color:var(--accent); background:var(--alt); color:var(--adk); }
+    .dest-btn.danger { border-color:#f0a0a0; color:#9b1c1c; background:#fff8f8; }
+    .dest-btn.danger:hover { border-color:#9b1c1c; background:#fde8e8; }
+    .dest-btn.danger.selected { border-color:#9b1c1c; background:#fde8e8; color:#9b1c1c; }
+
+    /* ACTION BUTTONS */
+    .action-btn { width:100%; padding:17px; border:none; border-radius:7px; background:var(--accent); color:#fff; font-size:20px; font-weight:900; letter-spacing:2px; cursor:pointer; text-transform:uppercase; margin-top:16px; }
+    .action-btn:disabled { opacity:.35; cursor:not-allowed; }
+    .action-btn:not(:disabled):hover { background:var(--adk); }
+    .action-btn.amber { background:#92400e; }
+    .action-btn.amber:not(:disabled):hover { background:#78350f; }
+    .action-btn.green { background:#065f46; }
+    .action-btn.green:not(:disabled):hover { background:#047857; }
+
+    /* ERROR / TOAST */
+    #errorMsg { display:none; background:#fde8e8; border:1px solid #f0a0a0; border-radius:5px; padding:9px 12px; font-size:13px; font-weight:700; color:#9b1c1c; margin-bottom:10px; }
+    #toast { display:none; position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--adk); color:#fff; padding:11px 26px; border-radius:7px; font-size:15px; font-weight:700; box-shadow:0 4px 18px rgba(0,0,0,.22); z-index:300; white-space:nowrap; }
+    #toast.err { background:#9b1c1c; }
+    #toast.ok  { background:var(--green); }
+
+    /* SCAN LIST (almacen) */
+    #scanList { margin-top:8px; }
+    .srow { display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--surface); border:1px solid var(--border2); border-radius:5px; margin-bottom:5px; font-size:13px; }
+    .srow .sc { font-weight:700; }
+    .srow .sw { color:var(--muted); }
+    #scanTotals { margin-top:7px; padding:9px 12px; background:var(--alt); border:1px solid #fca5a5; border-radius:5px; font-size:14px; font-weight:700; color:var(--adk); }
+
+    /* ALMACEN TABS */
+    .alm-tabs { display:flex; gap:0; margin-bottom:14px; border-radius:7px; overflow:hidden; border:1px solid var(--border2); }
+    .alm-tab  { flex:1; padding:11px 0; font-size:14px; font-weight:800; border:none; cursor:pointer; background:var(--surface); color:var(--muted); letter-spacing:.03em; transition:background .15s,color .15s; }
+    .alm-tab.active { background:var(--green); color:#fff; }
+    /* Pallet result card */
+    .pal-card { background:var(--surface); border:1.5px solid var(--border2); border-radius:8px; padding:13px 15px; margin-top:12px; }
+    .pal-card h3 { margin:0 0 8px; font-size:15px; color:var(--green); }
+    .pal-card .pal-meta { font-size:13px; color:var(--lbl); line-height:1.9; }
+    .pal-card .pal-meta strong { color:var(--fg); }
+    .pal-rolls { margin-top:10px; border-top:1px solid var(--border2); padding-top:8px; max-height:220px; overflow-y:auto; }
+    .pal-rolls .rrow { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border2); font-size:13px; }
+    .pal-rolls .rrow:last-child { border-bottom:none; }
+    /* Pallet list rows */
+    .plist-row { background:var(--surface); border:1px solid var(--border2); border-radius:6px; padding:10px 13px; margin-bottom:7px; cursor:pointer; transition:border-color .15s; }
+    .plist-row:hover { border-color:var(--green); }
+    .plist-row .pcode { font-weight:800; font-size:14px; }
+    .plist-row .pmeta { font-size:12px; color:var(--muted); margin-top:2px; }
+    .plist-row .pstat { font-size:11px; font-weight:800; padding:2px 8px; border-radius:3px; }
+    .pstat-open   { background:#dcfce7; color:#166534; }
+    .pstat-closed { background:#e0e7ff; color:#3730a3; }
+
+    /* ════ MODAL PANEL ════ */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; overflow-y:auto; padding:20px; }
+    .modal-overlay.open { display:flex; align-items:flex-start; justify-content:center; }
+    .modal-box { background:var(--white); border-radius:10px; width:100%; max-width:860px; margin:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden; }
+    .modal-hdr { background:var(--accent); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .modal-hdr h2 { margin:0; font-size:18px; font-weight:900; letter-spacing:.5px; }
+    .modal-close { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; font-weight:700; padding:0 4px; }
+    .modal-body { padding:18px 20px; }
+
+    /* History table */
+    .hist-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .hist-filters input, .hist-filters select { padding:7px 10px; border:1px solid var(--border); border-radius:5px; font-size:13px; }
+    .hist-filters .sbtn { padding:7px 14px; font-size:13px; }
+    .htable-wrap { overflow-x:auto; max-height:440px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; }
+    table.htable { width:100%; border-collapse:collapse; min-width:800px; font-size:13px; }
+    table.htable th { position:sticky; top:0; background:#1a1f2e; color:#e5e7eb; padding:9px 10px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+    table.htable td { padding:8px 10px; border-bottom:1px solid #e5e7eb; vertical-align:middle; }
+    table.htable tr:hover td { background:#f9fafb; }
+    .status-badge { font-size:10px; font-weight:800; padding:2px 7px; border-radius:3px; }
+    .st-active    { background:#dcfce7; color:#166534; }
+    .st-cancelled { background:#fee2e2; color:#7f1d1d; }
+    .st-replaced  { background:#fef3c7; color:#78350f; }
+    .st-completed { background:#dbeafe; color:#1e40af; }
+    .st-rejected  { background:#f3f4f6; color:#374151; }
+    .act-btn { padding:5px 10px; border:none; border-radius:4px; font-size:12px; font-weight:700; cursor:pointer; }
+    .act-btn.reprint { background:var(--blue); color:#fff; }
+    .act-btn.cancel  { background:var(--accent); color:#fff; }
+    #histLoading { color:var(--muted); font-size:13px; padding:20px; text-align:center; }
+
+    /* Cancel modal */
+    .cancel-form label { font-size:12px; font-weight:700; color:var(--lbl); text-transform:uppercase; margin-bottom:4px; display:block; }
+    .cancel-form select, .cancel-form textarea { width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:5px; font-size:14px; margin-bottom:10px; }
+    .cancel-form textarea { min-height:70px; resize:vertical; }
+
+    /* ── SCALE CARD ───────────────────────────────────────────── */
+    .scale-card { border:1px solid var(--border); border-radius:7px; padding:14px 16px; background:var(--surface); margin-bottom:2px; }
+    .scale-top  { margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+    .scale-status { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; padding:3px 10px; border-radius:4px; }
+    .sc-ok  { background:#dcfce7; color:#166534; }
+    .sc-err { background:#fee2e2; color:#9b1c1c; }
+    .sc-off { background:#f3f4f6; color:#6b7280; }
+    .sc-sim { background:#dbeafe; color:#1e40af; }   /* azul — modo simulación */
+    .scale-weight { font-size:44px; font-weight:900; color:var(--accent); font-variant-numeric:tabular-nums; text-align:center; padding:4px 0 2px; letter-spacing:2px; line-height:1; }
+    .scale-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin:4px 0; flex-wrap:wrap; gap:4px; }
+    .scale-stability { font-size:12px; font-weight:700; }
+    .scale-stability.stable   { color:#166534; }
+    .scale-stability.unstable { color:#92400e; }
+    .scale-raw   { font-size:10px; color:var(--muted); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:13px; }
+    .scale-error { font-size:11px; color:#9b1c1c; font-weight:700; min-height:13px; margin-top:2px; }
+    .scale-warning { background:#fef3c7; border:1px solid #f59e0b; border-radius:4px; padding:6px 10px; font-size:12px; font-weight:700; color:#78350f; margin:6px 0 4px; }
+    .scale-controls { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:10px 0 8px; }
+    .scale-controls input[type=text]   { width:86px; padding:7px 10px; border:1px solid var(--border); border-radius:5px; font-size:13px; font-weight:600; }
+    .scale-controls input[type=number] { width:78px; padding:7px 10px; border:1px solid var(--border); border-radius:5px; font-size:13px; font-weight:600; }
+    .scale-use-btn { width:100%; padding:11px; border:none; border-radius:6px; background:var(--blue); color:#fff; font-size:14px; font-weight:700; cursor:pointer; letter-spacing:.5px; }
+    .scale-use-btn:disabled { opacity:.4; cursor:not-allowed; }
+    .scale-use-btn:not(:disabled):hover { background:#1a3a8f; }
+
+    @media print { body { display:none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    <div class="hdr-brand">Biotécnica</div>
+    <div class="hdr-station" id="stationBadge">{{ mode|upper }}</div>
+  </div>
+  <div class="hdr-right">
+    <div id="shiftBadge">T--</div>
+    <div id="clock">--:--:--</div>
+    {% if mode != 'almacen' %}
+    <button class="hdr-btn blue"  onclick="openHistModal()">📋 Historial / Reimprimir</button>
+    <button class="hdr-btn amber" onclick="cancelLastRoll()">✕ Cancelar último</button>
+    {% endif %}
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div id="errorMsg"></div>
+
+    <!-- ═══ PRODUCCIÓN ═══ -->
+    <div id="produceSection">
+
+      <div class="sect">Orden de producción</div>
+      <div class="row2">
+        <div class="f"><label>PI / PAY</label>
+          <input id="payInput" type="text" placeholder="Ej: 21892 (CVE_DOC Aspel)" autocomplete="off" />
+        </div>
+        <button class="sbtn" id="searchPayBtn">Buscar</button>
+      </div>
+      <div class="strip green" id="orderStrip"></div>
+
+      <div id="lineBlock" style="display:none; margin-top:10px;">
+        <div id="lineNotice">▼ Este pedido tiene varios productos — selecciona uno:</div>
+        <div class="f">
+          <label>Producto / Línea del pedido</label>
+          <select id="lineSelect"><option value="">— Selecciona línea —</option></select>
+        </div>
+        <div class="strip green" id="lineDetailStrip"></div>
+      </div>
+
+      <!-- PROGRESO POR ÍTEM (almacén vs CANT) -->
+      <div id="piProgress">
+        <div class="prog-title">Avance del pedido (almacén vs CANT)</div>
+        <div id="piProgressList"></div>
+      </div>
+
+      <!-- LABEL OPTIONS -->
+      <div class="sect">Opciones de etiqueta</div>
+      <div class="label-opts-row">
+        <label class="check-lbl" title="Etiqueta sin logo ni datos internos de producción">
+          <input type="checkbox" id="distCheck" /> Distribuidor
+          <span id="brandBadge" class="label-preview-badge badge-normal">ESTÁNDAR</span>
+        </label>
+        <div style="height:24px; width:1px; background:var(--border);"></div>
+        <div>
+          <span style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Peso a imprimir:</span>
+          <div class="radio-group" style="margin-top:4px;">
+            <label class="radio-opt"><input type="radio" name="pwMode" id="pwBruto" value="gross" checked /> Bruto</label>
+            <label class="radio-opt"><input type="radio" name="pwMode" id="pwNeto"  value="net" /> Neto</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="sect">Operador / Máquina</div>
+      <div class="row2">
+        <div class="f"><label>Operador</label>
+          <select id="operatorSelect"><option value="">— Selecciona —</option></select>
+        </div>
+        <div class="f"><label>Máquina</label>
+          <select id="machineSelect"><option value="">— Selecciona —</option></select>
+        </div>
+      </div>
+
+      <!-- ⚖ BÁSCULA LOCAL -->
+      <div class="sect">⚖ Báscula local</div>
+      <div class="scale-card" id="scaleCard">
+        <div class="scale-top">
+          <span id="scaleStatus" class="scale-status sc-off">Agente local no disponible</span>
+        </div>
+        <div class="scale-weight" id="scaleLiveWeight">—</div>
+        <div class="scale-meta">
+          <span id="scaleStability" class="scale-stability"></span>
+          <span id="scaleAge"></span>
+        </div>
+        <div id="scaleRaw"   class="scale-raw"></div>
+        <div id="scaleError" class="scale-error"></div>
+        <div id="scaleWarning" class="scale-warning" style="display:none;"></div>
+        <div class="scale-controls">
+          <input id="scalePortInput" type="text"   placeholder="COM5" maxlength="20" />
+          <input id="scaleBaudInput" type="number" value="9600" min="300" max="115200" />
+          <button class="sbtn blue" onclick="saveScaleConfig()">Guardar</button>
+          <button class="sbtn"      onclick="fetchScaleWeight().then(d=>{lastScaleData=d;renderScaleStatus(d);}).catch(()=>renderScaleStatus(null))">Refrescar</button>
+        </div>
+        <button id="scaleUseBtn" class="scale-use-btn" disabled onclick="applyScaleWeight()">⚖ Usar peso de báscula</button>
+      </div>
+
+      <div class="sect">Peso bruto (kg)</div>
+      <div class="f">
+        <input class="bigw" id="gwInput" type="number" step="0.001" min="0.001"
+               placeholder="0.000" inputmode="decimal" autocomplete="off" />
+      </div>
+      <div id="netInfo"></div>
+
+      <div class="sect">Destino</div>
+      <div class="dest-grid" id="destGrid"></div>
+
+      <div id="readyHint" style="display:none; font-size:12px; font-weight:700; color:var(--accent); text-align:center; padding:6px 0 2px;"></div>
+      <button class="action-btn" id="registerBtn" disabled>REGISTRAR</button>
+    </div>
+
+    <!-- ═══ ALMACÉN ═══ -->
+    <div id="almacenSection" style="display:none;">
+      <div class="sect">Operador</div>
+      <div class="f">
+        <select id="almOperatorSelect"><option value="">— Selecciona operador —</option></select>
+      </div>
+
+      <!-- TABS -->
+      <div class="alm-tabs" style="margin-top:12px;">
+        <button class="alm-tab active" id="tabArmar"     onclick="switchAlmTab('armar')">📦 Armar tarima</button>
+        <button class="alm-tab"        id="tabConsultar" onclick="switchAlmTab('consultar')">🔍 Consultar tarima</button>
+      </div>
+
+      <!-- ── TAB: ARMAR ── -->
+      <div id="almArmarTab">
+        <div class="sect">Pedido</div>
+        <div class="row2">
+          <div class="f"><label>PI / PAY</label>
+            <input id="almPayInput" type="text" placeholder="Ej: 21892 (CVE_DOC Aspel)" autocomplete="off" />
+          </div>
+          <button class="sbtn" id="almSearchBtn">Buscar</button>
+        </div>
+        <div class="strip green" id="almOrderStrip"></div>
+
+        <div id="almNoTarima" style="display:none; margin-top:10px;">
+          <button class="action-btn green" id="createTarimaBtn" style="margin-top:0; font-size:15px; padding:13px;">
+            + Crear nueva tarima para este pedido
+          </button>
+        </div>
+
+        <div id="almScanArea" style="display:none; margin-top:14px;">
+          <div class="sect">Escanear rollos</div>
+          <div class="row2">
+            <div class="f"><label>Código de rollo / barcode</label>
+              <input id="scanCodeInput" type="text" placeholder="Escanea o escribe" autocomplete="off"
+                     style="text-transform:uppercase; font-size:16px;" />
+            </div>
+            <button class="sbtn" id="scanAddBtn">Agregar</button>
+          </div>
+          <div id="scanList"></div>
+          <div id="scanTotals" style="display:none;"></div>
+          <button class="action-btn amber" id="closeTarimaBtn" disabled style="margin-top:12px;">
+            CERRAR TARIMA
+          </button>
+        </div>
+      </div><!-- /almArmarTab -->
+
+      <!-- ── TAB: CONSULTAR ── -->
+      <div id="almConsultarTab" style="display:none;">
+
+        <!-- Buscar por código de tarima (scan directo) -->
+        <div class="sect" style="margin-top:4px;">Escanear / escribir código de tarima</div>
+        <div class="row2">
+          <div class="f">
+            <input id="palLookupInput" type="text" placeholder="Ej: PAL-20260525-00001"
+                   autocomplete="off" style="text-transform:uppercase; font-size:15px;" />
+          </div>
+          <button class="sbtn" id="palLookupBtn">Ver</button>
+        </div>
+
+        <!-- Buscar tarimas por PI -->
+        <div class="sect" style="margin-top:14px;">Buscar tarimas por PI / PAY</div>
+        <div class="row2">
+          <div class="f">
+            <input id="palByPiInput" type="text" placeholder="Ej: 21892 (CVE_DOC Aspel)" autocomplete="off" />
+          </div>
+          <button class="sbtn" id="palByPiBtn">Buscar</button>
+        </div>
+
+        <!-- Resultados -->
+        <div id="palResultArea" style="margin-top:10px;"></div>
+
+      </div><!-- /almConsultarTab -->
+
+    </div><!-- /almacenSection -->
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<!-- ════ HISTORIAL / REIMPRIMIR MODAL ════ -->
+<div class="modal-overlay" id="histModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h2>📋 Historial de Producción — Reimprimir / Cancelar</h2>
+      <button class="modal-close" onclick="closeHistModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-filters">
+        <input id="hfPi"     type="text"   placeholder="Buscar PI..." style="width:130px;" />
+        <input id="hfCode"   type="text"   placeholder="Código rollo" style="width:140px;" />
+        <select id="hfStatus" style="width:130px;">
+          <option value="">Todos los estados</option>
+          <option value="active">Activos</option>
+          <option value="completed">Completados</option>
+          <option value="cancelled">Cancelados</option>
+          <option value="replaced">Reemplazados</option>
+        </select>
+        <button class="sbtn" onclick="loadHistory()">Buscar</button>
+      </div>
+      <div id="histLoading">Cargando...</div>
+      <div class="htable-wrap" id="histTableWrap" style="display:none;">
+        <table class="htable">
+          <thead>
+            <tr>
+              <th>#Rollo</th><th>Código</th><th>PI</th><th>Producto</th>
+              <th>Bruto</th><th>Tara</th><th>Neto</th><th>Modo</th>
+              <th>Fecha</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CANCEL REASON MODAL ════ -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-hdr">
+      <h2>Cancelar rollo</h2>
+      <button class="modal-close" onclick="closeCancelModal()">✕</button>
+    </div>
+    <div class="modal-body cancel-form">
+      <p id="cancelTargetLabel" style="font-weight:700; margin-bottom:12px; color:var(--accent);"></p>
+      <label>Motivo *</label>
+      <select id="cancelReason">
+        <option value="peso_incorrecto">Peso incorrecto</option>
+        <option value="PI_incorrecto">PI incorrecto</option>
+        <option value="producto_incorrecto">Producto incorrecto</option>
+        <option value="medida_calibre_incorrecto">Medida / calibre incorrecto</option>
+        <option value="destino_incorrecto">Destino incorrecto</option>
+        <option value="error_captura">Error de captura</option>
+        <option value="etiqueta_danada">Etiqueta dañada (use Reimprimir en cambio)</option>
+        <option value="otro">Otro</option>
+      </select>
+      <label>Notas (opcional)</label>
+      <textarea id="cancelNotes" placeholder="Descripción adicional..."></textarea>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="action-btn" id="cancelConfirmBtn" style="margin-top:0; font-size:15px; padding:13px; flex:1;">Confirmar Cancelación</button>
+        <button class="action-btn amber" id="cancelReplaceBtn" style="margin-top:0; font-size:14px; padding:13px; flex:1;">Cancelar y volver a registrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MODE   = "{{ mode }}";
+const IS_ALM = MODE === "almacen";
+let currentStation = null;
+
+const DEST_LABELS   = { extrusion:"Extrusión", corte:"Corte", impresion:"Impresión", bolseo:"Bolseo", almacen:"Almacén", reciclaje:"Reciclaje" };
+const PROD_STATIONS = ["extrusion","corte","impresion","bolseo"];
+const ALLOWED_FROM  = {
+  extrusion: ["corte","impresion","bolseo","almacen","reciclaje"],
+  corte:     ["impresion","bolseo","almacen","reciclaje"],
+  impresion: ["bolseo","almacen","reciclaje"],
+  bolseo:    ["almacen","reciclaje"],
+};
+
+const $ = id => document.getElementById(id);
+const getToken  = () => localStorage.getItem("token");
+const getShift  = () => { const h=new Date().getHours(); return h>=6&&h<14?"T1":h>=14&&h<22?"T2":"T3"; };
+
+// ── Clock ──
+(function tick(){
+  $("clock").textContent = new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  $("shiftBadge").textContent = getShift();
+  setTimeout(tick,1000);
+})();
+
+// ── API ──
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: {
+      "Content-Type":"application/json",
+      ...(getToken() ? {Authorization:"Bearer "+getToken()} : {}),
+      ...(opts.headers||{})
+    }
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.detail || `Error ${r.status}`);
+  return d;
+}
+
+// ── Toast / Error ──
+let toastT;
+function toast(msg,type="ok"){
+  const e=$("toast"); e.textContent=msg; e.className=type;
+  e.style.display="block"; clearTimeout(toastT);
+  toastT=setTimeout(()=>e.style.display="none", 3800);
+}
+function showErr(msg){ const e=$("errorMsg"); e.textContent=msg; e.style.display="block"; }
+function clearErr(){ $("errorMsg").style.display="none"; }
+
+// ── Operators / Machines ──
+async function loadOperators(){
+  try {
+    const us = await api("/auth/operators");
+    const sv = localStorage.getItem("opId");
+    ["operatorSelect","almOperatorSelect"].forEach(id=>{
+      const s=$(id); if(!s) return;
+      s.innerHTML='<option value="">— Selecciona operador —</option>';
+      us.forEach(u=>{ const o=document.createElement("option"); o.value=u.user_id; o.textContent=u.full_name; s.appendChild(o); });
+      if(sv) s.value=sv;
+    });
+  } catch(e){}
+}
+let allMachines=[];
+async function loadMachines(){
+  if(IS_ALM) return;
+  try {
+    allMachines = await api("/config/machines");
+    const s=$("machineSelect"); s.innerHTML='<option value="">— Selecciona máquina —</option>';
+    const groups={};
+    allMachines.forEach(m=>{ if(!PROD_STATIONS.includes(m.station_code)) return; (groups[m.station_code]=groups[m.station_code]||[]).push(m); });
+    PROD_STATIONS.forEach(sc=>{
+      const mlist=groups[sc]; if(!mlist||!mlist.length) return;
+      const og=document.createElement("optgroup"); og.label=DEST_LABELS[sc]||sc;
+      mlist.forEach(m=>{ const o=document.createElement("option"); o.value=m.machine_id; o.dataset.station=m.station_code; o.textContent=m.machine_name; og.appendChild(o); });
+      s.appendChild(og);
+    });
+    const sv=localStorage.getItem("machId"); if(sv){ s.value=sv; if(s.value) onMachineChange(); }
+  } catch(e){}
+}
+function onMachineChange(){
+  const s=$("machineSelect");
+  const opt=s.options[s.selectedIndex];
+  currentStation=(opt&&opt.dataset.station)||null;
+  localStorage.setItem("machId",s.value);
+  const badge=$("stationBadge");
+  if(badge) badge.textContent=currentStation?(DEST_LABELS[currentStation]||currentStation).toUpperCase():"PRODUCCIÓN";
+  selectedDest=null;
+  buildDestGrid();
+  checkReady();
+}
+
+$("operatorSelect").addEventListener("change", async function(){
+  if(!this.value) return;
+  try {
+    const d=await api("/auth/select-operator",{method:"POST",body:JSON.stringify({user_id:parseInt(this.value)})});
+    localStorage.setItem("token",d.access_token); localStorage.setItem("opId",this.value);
+    loadMachines();  // /config/machines requiere token: recargar ya autenticados
+    checkReady();
+  } catch(e){ showErr("Error operador: "+e.message); }
+});
+$("machineSelect").addEventListener("change", onMachineChange);
+$("almOperatorSelect").addEventListener("change", async function(){
+  if(!this.value) return;
+  try {
+    const d=await api("/auth/select-operator",{method:"POST",body:JSON.stringify({user_id:parseInt(this.value)})});
+    localStorage.setItem("token",d.access_token); localStorage.setItem("opId",this.value);
+    if($("operatorSelect")) $("operatorSelect").value=this.value;
+  } catch(e){ showErr("Error operador: "+e.message); }
+});
+
+// ── Section switch ──
+if(IS_ALM){ $("produceSection").style.display="none"; $("almacenSection").style.display="block"; }
+else { buildDestGrid(); }
+
+// ── Dest buttons ──
+let selectedDest=null;
+function buildDestGrid(){
+  const grid=$("destGrid"); grid.innerHTML="";
+  const dests=ALLOWED_FROM[currentStation];
+  if(!dests){ grid.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0;">Selecciona una máquina para ver destinos disponibles</div>'; return; }
+  dests.forEach(d=>{
+    const btn=document.createElement("button");
+    btn.className="dest-btn"+(d==="reciclaje"?" danger":"");
+    btn.dataset.dest=d; btn.textContent=DEST_LABELS[d]||d;
+    btn.addEventListener("click",function(){
+      grid.querySelectorAll(".dest-btn").forEach(b=>b.classList.remove("selected"));
+      this.classList.add("selected"); selectedDest=d; checkReady();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+// ── Label options ──
+let brandingMode    = "normal";
+let printWeightMode = "gross";
+
+$("distCheck").addEventListener("change",function(){
+  brandingMode = this.checked ? "distributor" : "normal";
+  $("brandBadge").textContent   = this.checked ? "DISTRIBUIDOR" : "ESTÁNDAR";
+  $("brandBadge").className = "label-preview-badge " + (this.checked ? "badge-distributor" : "badge-normal");
+  updateNetInfo();
+});
+document.querySelectorAll('input[name="pwMode"]').forEach(r=>{
+  r.addEventListener("change",function(){ printWeightMode=this.value; updateNetInfo(); });
+});
+
+// ── PI search ──
+let lotId=null, orderId=null, lineId=null, tare=0;
+let lastOrderData=null;
+
+$("searchPayBtn").addEventListener("click",doPay);
+$("payInput").addEventListener("keydown",e=>{ if(e.key==="Enter") doPay(); });
+
+async function doPay(){
+  const pay=$("payInput").value.trim(); if(!pay) return;
+  if(!getToken()){ showErr("Selecciona tu nombre en 'Seleccionar operador' antes de buscar el pedido."); return; }
+  $("searchPayBtn").disabled=true; clearErr();
+  $("orderStrip").style.display="none"; $("lineBlock").style.display="none"; $("lineDetailStrip").style.display="none";
+  $("piProgress").style.display="none"; $("piProgressList").innerHTML="";
+  lotId=null; orderId=null; lineId=null; tare=0; lastOrderData=null;
+  try {
+    const d = await api(`/orders/by-sae/${encodeURIComponent(pay)}`);
+    lastOrderData=d; lotId=d.lot_id; orderId=d.sales_order_id;
+    $("orderStrip").innerHTML=`<div><strong>Cliente</strong>${d.customer_name||"—"}</div><div><strong>Pedido</strong>${d.sae_order_number}</div>`;
+    $("orderStrip").style.display="block";
+
+    if(d.lines && d.lines.length===1){
+      setLine(d.lines[0]);
+      $("orderStrip").innerHTML+=`<div><strong>Producto</strong>${d.lines[0].product_description}</div><div><strong>Medida</strong>${d.lines[0].measure||"—"} · <strong>Calibre</strong> ${d.lines[0].caliber||"—"}</div>`;
+      $("lineBlock").style.display="none";
+    } else if(d.lines && d.lines.length>1){
+      $("lineNotice").style.display="block";
+      const sel=$("lineSelect"); sel.innerHTML='<option value="">— Selecciona línea —</option>';
+      d.lines.forEach(l=>{
+        const o=document.createElement("option");
+        o.value=l.sales_order_line_id;
+        o.dataset.branding=l.default_branding_mode||"normal";
+        o.dataset.pwmode=l.default_print_weight_mode||"gross";
+        o.dataset.tare=l.bobbin_weight_kg||0;
+        o.dataset.prod=l.product_description; o.dataset.med=l.measure||"—"; o.dataset.cal=l.caliber||"—";
+        o.textContent=`${l.line_number}. ${l.product_description}  ${l.measure||""}  ${l.caliber||""}`.trim();
+        sel.appendChild(o);
+      });
+      $("lineBlock").style.display="block";
+    }
+    renderPiProgress(d.lines, lineId);
+    checkReady();
+    if(lineId) setTimeout(()=>$("gwInput").focus(), 80);
+  } catch(e){ showErr("PI/PAY no encontrado: "+e.message); $("orderStrip").style.display="none"; }
+  finally{ $("searchPayBtn").disabled=false; }
+}
+
+// ── Progreso por ítem (almacén vs CANT) ──
+function progFillClass(pct){
+  if(pct==null)   return "high";
+  if(pct>=110)    return "over";
+  if(pct>=100)    return "done";
+  if(pct>=66)     return "high";
+  if(pct>=33)     return "mid";
+  return "low";
+}
+
+function renderPiProgress(lines, selLineId){
+  const wrap=$("piProgress"), list=$("piProgressList");
+  if(!lines || !lines.length){ wrap.style.display="none"; list.innerHTML=""; return; }
+  list.innerHTML="";
+  lines.forEach(l=>{
+    const cant = (l.quantity_ordered!=null) ? l.quantity_ordered : null;
+    const prod = l.warehouse_net_kg || 0;
+    const rolls= l.warehouse_roll_count || 0;
+    const pct  = (l.pct_complete!=null) ? l.pct_complete : null;
+    const isSel= selLineId && parseInt(l.sales_order_line_id)===parseInt(selLineId);
+    const cls  = progFillClass(pct);
+    const w    = pct==null ? 0 : Math.min(pct, 100);
+    let flag="";
+    if(pct!=null && pct>=110)      flag=` <span class="prog-flag over">▲ Excedido</span>`;
+    else if(pct!=null && pct>=100) flag=` <span class="prog-flag done">✓ Completo</span>`;
+    const pctTxt = pct==null ? "—" : pct.toFixed(0)+"%";
+    const meta = [l.measure, l.caliber].filter(Boolean).join(" · ");
+    const nums = (cant==null)
+      ? `<span class="prog-noCant">Sin CANT en Excel — producido <b>${prod.toFixed(1)} kg</b> · ${rolls} rollo${rolls===1?"":"s"}</span>`
+      : `Producido <b>${prod.toFixed(1)} kg</b> de <b>${cant.toLocaleString()}</b> (CANT) · ${rolls} rollo${rolls===1?"":"s"}`;
+    const div=document.createElement("div");
+    div.className="prog-item"+(isSel?" active":"");
+    div.innerHTML=
+      `<div class="prog-head">`+
+        `<div class="prog-name"><span class="ln">${l.line_number}.</span>${l.product_description||"—"}`+
+        (meta?` <span style="color:var(--muted);font-weight:500;font-size:11px;">${meta}</span>`:"")+`</div>`+
+        `<div class="prog-pct">${pctTxt}${flag}</div>`+
+      `</div>`+
+      `<div class="prog-bar"><div class="prog-fill ${cls}" style="width:${w}%"></div></div>`+
+      `<div class="prog-nums">${nums}</div>`;
+    list.appendChild(div);
+  });
+  wrap.style.display="block";
+}
+
+// Refresca el avance volviendo a consultar el pedido (tras registrar un rollo)
+async function refreshPiProgress(){
+  if(!lastOrderData || !lastOrderData.sae_order_number) return;
+  try {
+    const d = await api(`/orders/by-sae/${encodeURIComponent(lastOrderData.sae_order_number)}`);
+    lastOrderData = d;
+    renderPiProgress(d.lines, lineId);
+  } catch(e){ /* silencioso: no interrumpir el flujo de producción */ }
+}
+
+function setLine(l){
+  lineId  = parseInt(l.sales_order_line_id || l);
+  tare    = parseFloat(l.bobbin_weight_kg) || 0;
+  // Apply line defaults to label options if not manually overridden
+  const bm = l.default_branding_mode || "normal";
+  const pm = l.default_print_weight_mode || "gross";
+  brandingMode    = bm;
+  printWeightMode = pm;
+  $("distCheck").checked = bm === "distributor";
+  $("brandBadge").textContent = bm === "distributor" ? "DISTRIBUIDOR" : "ESTÁNDAR";
+  $("brandBadge").className = "label-preview-badge " + (bm === "distributor" ? "badge-distributor" : "badge-normal");
+  document.querySelector(`input[name="pwMode"][value="${pm}"]`).checked = true;
+}
+
+$("lineSelect").addEventListener("change",function(){
+  const o=this.options[this.selectedIndex];
+  if(!this.value){ lineId=null; $("lineDetailStrip").style.display="none"; checkReady(); return; }
+  lineId=parseInt(this.value); tare=parseFloat(o.dataset.tare)||0;
+  brandingMode=o.dataset.branding||"normal"; printWeightMode=o.dataset.pwmode||"gross";
+  $("distCheck").checked=(brandingMode==="distributor");
+  $("brandBadge").textContent=brandingMode==="distributor"?"DISTRIBUIDOR":"ESTÁNDAR";
+  $("brandBadge").className="label-preview-badge "+(brandingMode==="distributor"?"badge-distributor":"badge-normal");
+  document.querySelector(`input[name="pwMode"][value="${printWeightMode}"]`).checked=true;
+  $("lineDetailStrip").innerHTML=`<div><strong>Producto</strong>${o.dataset.prod}</div><div><strong>Medida</strong>${o.dataset.med} · <strong>Calibre</strong> ${o.dataset.cal}</div><div><strong>Tara bobina</strong>${tare>0?tare+" kg":"—"}</div>`;
+  $("lineDetailStrip").style.display="block";
+  if(lastOrderData) renderPiProgress(lastOrderData.lines, lineId);
+  updateNetInfo(); checkReady();
+  setTimeout(()=>$("gwInput").focus(), 80);
+});
+
+function updateNetInfo(){
+  const g=parseFloat($("gwInput").value)||0; const info=$("netInfo");
+  if(g>0){
+    const n=g-tare;
+    const pw=printWeightMode==="gross"?g:n;
+    const valid=n>0;
+    info.innerHTML=`Neto estimado: <strong>${valid?n.toFixed(3):"<span style='color:red'>insuficiente</span>"} kg</strong> &nbsp;|&nbsp; Tara: ${tare} kg &nbsp;|&nbsp; Se imprimirá: <strong>${valid?pw.toFixed(3):"—"} kg (${printWeightMode==="gross"?"BRUTO":"NETO"})</strong>`;
+    info.style.color=valid?"var(--muted)":"var(--accent)";
+  } else info.textContent="";
+}
+$("gwInput").addEventListener("input",()=>{ updateNetInfo(); checkReady(); });
+
+function checkReady(){
+  const missing=[];
+  if(!$("operatorSelect").value)       missing.push("Selecciona un operador");
+  else if(!getToken())                 missing.push("Error de sesión — vuelve a seleccionar operador");
+  if(!$("machineSelect").value)        missing.push("Selecciona una máquina");
+  if(!orderId)                         missing.push("Busca un PI/PAY válido");
+  if(!lineId)                          missing.push("Selecciona la línea del pedido");
+  if(!(parseFloat($("gwInput").value)>0)) missing.push("Ingresa el peso bruto");
+  if(!selectedDest)                    missing.push("Selecciona destino");
+  const hint=$("readyHint");
+  if(missing.length){ hint.textContent="▸ "+missing[0]; hint.style.display="block"; $("registerBtn").disabled=true; }
+  else { hint.style.display="none"; $("registerBtn").disabled=false; }
+}
+
+// ── Print via browser preview (USB local) ──
+async function doPrint(itemCode){
+  try {
+    // Log the print event first
+    await api(`/labels/${itemCode}/print`,{method:"POST",body:JSON.stringify({
+      reason:"Impresión al registrar", branding_mode:brandingMode, print_weight_mode:printWeightMode
+    })});
+    // Open preview tab for USB printing
+    window.open(`/labels/${itemCode}/preview?autoprint=1`,"_blank");
+  } catch(e){ toast("Error al imprimir: "+e.message,"err"); }
+}
+
+// Keep last registered for "cancel last" shortcut
+let lastRegistered = null;
+
+// ── REGISTER ──
+$("registerBtn").addEventListener("click",async function(){
+  this.disabled=true; this.textContent="Registrando…"; clearErr();
+  try {
+    const d = await api("/items/produce",{method:"POST",body:JSON.stringify({
+      lot_id:          lotId,
+      sales_order_line_id: lineId,
+      station:         currentStation,
+      next_stage:      selectedDest,
+      gross_weight:    parseFloat($("gwInput").value),
+      machine_id:      parseInt($("machineSelect").value),
+      branding_mode:   brandingMode,
+      print_weight_mode: printWeightMode,
+      source_item_codes: [],
+    })});
+    lastRegistered = d.item_code;
+    toast(`✓ ${d.item_code}  —  ${d.printed_weight_kg.toFixed(3)} kg (${d.print_weight_mode==="gross"?"bruto":"neto"})`,"ok");
+    $("gwInput").value=""; updateNetInfo();
+    refreshPiProgress();
+    await doPrint(d.item_code);
+    setTimeout(()=>$("gwInput").focus(), 150);
+  } catch(e){ showErr(e.message); }
+  finally { this.textContent="REGISTRAR"; checkReady(); }
+});
+
+// ── Cancel last (quick action) ──
+async function cancelLastRoll(){
+  if(!lastRegistered){
+    toast("No hay un rollo reciente para cancelar en esta sesión","err"); return;
+  }
+  openCancelModalFor(lastRegistered);
+}
+
+// ── HISTORIAL MODAL ──
+function openHistModal(){ $("histModal").classList.add("open"); loadHistory(); }
+function closeHistModal(){ $("histModal").classList.remove("open"); }
+
+async function loadHistory(){
+  $("histLoading").style.display="block";
+  $("histTableWrap").style.display="none";
+  $("histBody").innerHTML="";
+  try {
+    const pi   = $("hfPi").value.trim();
+    const code = $("hfCode").value.trim();
+    const status = $("hfStatus").value;
+    let url = `/items/recent?limit=100`;
+    if(status) url+=`&status=${encodeURIComponent(status)}`;
+    if(pi)     url+=`&pi=${encodeURIComponent(pi)}`;
+    if(currentStation) url+=`&station=${encodeURIComponent(currentStation)}`;
+
+    let rows = await api(url);
+    if(code) rows = rows.filter(r => (r.item_code||"").includes(code.toUpperCase()) || (r.barcode_value||"").includes(code.toUpperCase()));
+
+    const tbody = $("histBody");
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px;">Sin registros</td></tr>'; }
+    else rows.forEach(r=>{
+      const statusClass = {active:"st-active",cancelled:"st-cancelled",replaced:"st-replaced",completed:"st-completed",rejected:"st-rejected"}[r.status]||"";
+      const canReprint  = !["cancelled"].includes(r.status);
+      const canCancel   = !["cancelled","replaced"].includes(r.status);
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${r.roll_number||"—"}</td>
+        <td style="font-family:monospace;font-size:12px;">${r.item_code}</td>
+        <td>${r.sae_order_number||"—"}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.product_description||""}">${r.product_description||"—"}</td>
+        <td>${r.gross_weight!=null?r.gross_weight.toFixed(3):"—"}</td>
+        <td>${r.bobbin_weight_kg!=null?r.bobbin_weight_kg.toFixed(3):"—"}</td>
+        <td>${r.net_weight!=null?r.net_weight.toFixed(3):"—"}</td>
+        <td>${(r.branding_mode==="distributor"?"Dist":"Std")}/${r.print_weight_mode==="gross"?"Bruto":"Neto"}</td>
+        <td style="white-space:nowrap;">${r.created_at?r.created_at.substring(0,16).replace("T"," "):"—"}</td>
+        <td><span class="status-badge ${statusClass}">${r.status.toUpperCase()}</span></td>
+        <td style="white-space:nowrap;">
+          ${canReprint?`<button class="act-btn reprint" onclick="doReprint('${r.item_code}')">Reimprimir</button>`:""}
+          ${canCancel?` <button class="act-btn cancel"  onclick="openCancelModalFor('${r.item_code}')">Cancelar</button>`:""}
+          ${r.status==="replaced"?`<span style="font-size:11px;color:var(--muted);">Reemplazado</span>`:""}
+          ${r.status==="cancelled"?`<span style="font-size:11px;color:var(--muted);">${r.cancel_reason||""}</span>`:""}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    $("histTableWrap").style.display="block";
+  } catch(e){ $("histBody").innerHTML=`<tr><td colspan="11" style="color:red;padding:12px;">${e.message}</td></tr>`; $("histTableWrap").style.display="block"; }
+  finally { $("histLoading").style.display="none"; }
+}
+
+async function doReprint(itemCode){
+  try {
+    const d = await api(`/labels/${itemCode}/reprint`,{method:"POST",body:JSON.stringify({reason:"Reimpresión desde operador"})});
+    window.open(`/labels/${itemCode}/preview?autoprint=1`,"_blank");
+    toast(`✓ Reimprimiendo ${itemCode} (${d.print_number}°)`, "ok");
+    loadHistory();
+  } catch(e){ toast("Error: "+e.message,"err"); }
+}
+
+// ── CANCEL MODAL ──
+let cancelTargetCode = null;
+function openCancelModalFor(itemCode){
+  cancelTargetCode = itemCode;
+  $("cancelTargetLabel").textContent = `Rollo a cancelar: ${itemCode}`;
+  $("cancelNotes").value="";
+  $("cancelModal").classList.add("open");
+}
+function closeCancelModal(){ $("cancelModal").classList.remove("open"); cancelTargetCode=null; }
+
+$("cancelConfirmBtn").addEventListener("click", async function(){
+  if(!cancelTargetCode) return;
+  this.disabled=true;
+  try {
+    await api(`/items/${cancelTargetCode}/cancel`,{method:"POST",body:JSON.stringify({
+      reason: $("cancelReason").value,
+      notes:  $("cancelNotes").value||null,
+    })});
+    toast(`✓ Rollo ${cancelTargetCode} cancelado`,"ok");
+    if(cancelTargetCode===lastRegistered) lastRegistered=null;
+    closeCancelModal();
+    loadHistory();
+  } catch(e){ toast("Error: "+e.message,"err"); }
+  finally { this.disabled=false; }
+});
+
+$("cancelReplaceBtn").addEventListener("click", async function(){
+  if(!cancelTargetCode) return;
+  this.disabled=true;
+  try {
+    // 1. Cancel old item
+    await api(`/items/${cancelTargetCode}/cancel`,{method:"POST",body:JSON.stringify({
+      reason: $("cancelReason").value||"error_captura",
+      notes:  $("cancelNotes").value||"Anulado para reregistro",
+    })});
+    // 2. Preload the cancelled item's data into the produce form
+    const old = await api(`/items/${cancelTargetCode}`);
+    if(old.sae_order_number && $("payInput")){
+      $("payInput").value = old.sae_order_number;
+      closeCancelModal();
+      closeHistModal();
+      // Trigger PI search which will preload line/product
+      await doPay();
+      // Preload weight
+      if(old.gross_weight) $("gwInput").value = old.gross_weight.toFixed(3);
+      updateNetInfo(); checkReady();
+      toast(`Datos de ${cancelTargetCode} precargados. Corrija y registre de nuevo.`, "ok");
+    } else {
+      toast(`Rollo ${cancelTargetCode} cancelado. Registre la corrección manualmente.`, "ok");
+      closeCancelModal(); closeHistModal();
+    }
+    if(cancelTargetCode===lastRegistered) lastRegistered=null;
+  } catch(e){ toast("Error: "+e.message,"err"); }
+  finally { this.disabled=false; }
+});
+
+// Close modals on overlay click
+$("histModal").addEventListener("click",function(e){ if(e.target===this) closeHistModal(); });
+$("cancelModal").addEventListener("click",function(e){ if(e.target===this) closeCancelModal(); });
+
+// ═══ ALMACÉN ═══
+let currentPallet=null;
+
+$("almSearchBtn").addEventListener("click",doAlmSearch);
+$("almPayInput").addEventListener("keydown",e=>{ if(e.key==="Enter") doAlmSearch(); });
+
+async function doAlmSearch(){
+  const pay=$("almPayInput").value.trim(); if(!pay) return;
+  $("almSearchBtn").disabled=true; clearErr();
+  $("almNoTarima").style.display="none"; $("almScanArea").style.display="none"; $("almOrderStrip").style.display="none";
+  try {
+    const order=await api(`/orders/by-sae/${encodeURIComponent(pay)}`);
+    $("almOrderStrip").innerHTML=`<div><strong>Cliente</strong>${order.customer_name||"—"}</div><div><strong>Pedido</strong>${order.sae_order_number}</div>`;
+    $("almOrderStrip").style.display="block";
+    try {
+      currentPallet=await api(`/pallets/open-for-order/${encodeURIComponent(pay)}`);
+      renderScanArea();
+    } catch(e2){ currentPallet=null; $("almNoTarima").style.display="block"; }
+  } catch(e){ showErr("Pedido no encontrado: "+e.message); }
+  finally{ $("almSearchBtn").disabled=false; }
+}
+
+$("createTarimaBtn").addEventListener("click",async function(){
+  this.disabled=true;
+  try {
+    currentPallet=await api(`/pallets/create-for-order/${encodeURIComponent($("almPayInput").value.trim())}`,{method:"POST"});
+    $("almNoTarima").style.display="none"; renderScanArea();
+    toast("Tarima creada: "+currentPallet.pallet_code,"ok");
+  } catch(e){ showErr(e.message); }
+  finally{ this.disabled=false; }
+});
+
+function renderScanArea(){ $("almScanArea").style.display="block"; renderScanList(); }
+function renderScanList(){
+  const list=$("scanList"); list.innerHTML="";
+  const scanned = currentPallet&&currentPallet.scanned_items ? currentPallet.scanned_items : [];
+  if(!scanned.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0;">Sin rollos escaneados</div>';
+    $("scanTotals").style.display="none"; $("closeTarimaBtn").disabled=true; return;
+  }
+  let total=0;
+  scanned.forEach(it=>{
+    total+=it.gross_weight;
+    const row=document.createElement("div"); row.className="srow";
+    row.innerHTML=`<span class="sc">${it.item_code}</span><span class="sw">${it.gross_weight.toFixed(3)} kg</span>`;
+    list.appendChild(row);
+  });
+  $("scanTotals").textContent=`${scanned.length} rollo(s)  —  Total bruto: ${total.toFixed(3)} kg`;
+  $("scanTotals").style.display="block"; $("closeTarimaBtn").disabled=false;
+}
+
+$("scanAddBtn").addEventListener("click",doScanAdd);
+$("scanCodeInput").addEventListener("keydown",e=>{ if(e.key==="Enter") doScanAdd(); });
+
+async function doScanAdd(){
+  const code=$("scanCodeInput").value.trim().toUpperCase(); if(!code||!currentPallet) return;
+  clearErr();
+  const already = (currentPallet.scanned_items||[]).find(i=>i.item_code===code);
+  if(already){ showErr("Este rollo ya está en la tarima"); return; }
+  try {
+    await api(`/pallets/${currentPallet.pallet_code}/items`,{method:"POST",body:JSON.stringify({item_code:code})});
+    currentPallet=await api(`/pallets/open-for-order/${encodeURIComponent($("almPayInput").value.trim())}`);
+    $("scanCodeInput").value=""; renderScanList(); toast(`✓ ${code} agregado`,"ok");
+  } catch(e){ showErr(e.message); }
+  finally{ $("scanCodeInput").focus(); }
+}
+
+$("closeTarimaBtn").addEventListener("click",async function(){
+  if(!currentPallet) return;
+  const n=(currentPallet.scanned_items||[]).length;
+  if(!confirm(`¿Cerrar tarima ${currentPallet.pallet_code} con ${n} rollo(s)?`)) return;
+  this.disabled=true;
+  try {
+    const d=await api(`/pallets/${currentPallet.pallet_code}/close`,{method:"POST"});
+    window.open(`/pallets/${currentPallet.pallet_code}/preview?autoprint=1`,"_blank");
+    toast(`Tarima ${currentPallet.pallet_code} cerrada (${d.total_gross_kg.toFixed(3)} kg bruto)`,"ok");
+    currentPallet=null; $("almScanArea").style.display="none"; $("almOrderStrip").style.display="none"; $("almPayInput").value="";
+  } catch(e){ showErr(e.message); this.disabled=false; }
+});
+
+// ═══ ALMACÉN — TAB CONSULTAR ═════════════════════════════════════════════════
+
+function switchAlmTab(tab){
+  const isArmar = tab === 'armar';
+  $("almArmarTab").style.display     = isArmar ? "" : "none";
+  $("almConsultarTab").style.display = isArmar ? "none" : "";
+  $("tabArmar").classList.toggle("active", isArmar);
+  $("tabConsultar").classList.toggle("active", !isArmar);
+  if (!isArmar) {
+    $("palLookupInput").focus();
+    $("palResultArea").innerHTML = "";
+  }
+}
+
+$("palLookupBtn").addEventListener("click", doLookupPallet);
+$("palLookupInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doLookupPallet(); });
+$("palByPiBtn").addEventListener("click", doSearchPalletsByPi);
+$("palByPiInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doSearchPalletsByPi(); });
+
+async function doLookupPallet(){
+  const code = $("palLookupInput").value.trim().toUpperCase(); if(!code) return;
+  $("palResultArea").innerHTML = '<div style="font-size:13px;color:var(--muted);padding:10px 0;">Buscando…</div>';
+  try {
+    const pal = await api(`/pallets/${encodeURIComponent(code)}`);
+    $("palResultArea").innerHTML = renderPalletCard(pal);
+  } catch(e){
+    $("palResultArea").innerHTML = `<div style="color:#f87171;font-size:13px;padding:8px 0;">❌ ${e.message}</div>`;
+  }
+}
+
+async function doSearchPalletsByPi(){
+  const pi = $("palByPiInput").value.trim(); if(!pi) return;
+  $("palResultArea").innerHTML = '<div style="font-size:13px;color:var(--muted);padding:10px 0;">Buscando…</div>';
+  try {
+    const list = await api(`/pallets/?sae=${encodeURIComponent(pi)}&limit=50`);
+    if(!list || !list.length){
+      $("palResultArea").innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">Sin tarimas para este PI.</div>';
+      return;
+    }
+    $("palResultArea").innerHTML = list.map(p => `
+      <div class="plist-row" onclick="lookupPalletFromList('${p.pallet_code}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="pcode">${p.pallet_code}</span>
+          <span class="pstat ${p.status==='open'?'pstat-open':'pstat-closed'}">${p.status==='open'?'Abierta':'Cerrada'}</span>
+        </div>
+        <div class="pmeta">
+          ${p.item_count} rollo(s) &nbsp;·&nbsp; ${(p.total_gross_kg||0).toFixed(3)} kg bruto
+          ${p.closed_at ? ' &nbsp;·&nbsp; Cerrada: '+p.closed_at.slice(0,10) : ''}
+        </div>
+      </div>`).join('');
+  } catch(e){
+    $("palResultArea").innerHTML = `<div style="color:#f87171;font-size:13px;padding:8px 0;">❌ ${e.message}</div>`;
+  }
+}
+
+async function lookupPalletFromList(code){
+  $("palLookupInput").value = code;
+  $("palResultArea").innerHTML = '<div style="font-size:13px;color:var(--muted);padding:10px 0;">Cargando detalle…</div>';
+  try {
+    const pal = await api(`/pallets/${encodeURIComponent(code)}`);
+    $("palResultArea").innerHTML = renderPalletCard(pal);
+  } catch(e){
+    $("palResultArea").innerHTML = `<div style="color:#f87171;font-size:13px;padding:8px 0;">❌ ${e.message}</div>`;
+  }
+}
+
+function renderPalletCard(pal){
+  const statusBadge = pal.status === 'open'
+    ? '<span class="pstat pstat-open">Abierta</span>'
+    : '<span class="pstat pstat-closed">Cerrada</span>';
+  const previewLink = `<a href="/pallets/${pal.pallet_code}/preview" target="_blank"
+      style="font-size:12px;color:var(--blue);text-decoration:underline;">🖨 Ver etiqueta completa</a>`;
+
+  const rolls = (pal.scanned_items||pal.items||[]);
+  const rollRows = rolls.length
+    ? rolls.map(r=>`
+        <div class="rrow">
+          <span>${r.barcode_value||r.item_code}</span>
+          <span style="color:var(--muted);">${(r.gross_weight||0).toFixed(3)} kg</span>
+        </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Sin rollos.</div>';
+
+  return `<div class="pal-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <h3>${pal.pallet_code}</h3>
+      ${statusBadge}
+    </div>
+    <div class="pal-meta">
+      <strong>PI / Pedido:</strong> ${pal.sae_order_number||'—'}<br>
+      <strong>Cliente:</strong> ${pal.customer_name||'—'}<br>
+      <strong>Rollos:</strong> ${rolls.length} &nbsp;·&nbsp;
+      <strong>Bruto:</strong> ${(pal.total_gross_kg||0).toFixed(3)} kg &nbsp;·&nbsp;
+      <strong>Neto:</strong> ${(pal.total_net_kg||0).toFixed(3)} kg<br>
+      ${pal.closed_at ? '<strong>Cerrada:</strong> '+pal.closed_at.replace('T',' ').slice(0,16)+'<br>' : ''}
+    </div>
+    <div style="margin-top:8px;">${previewLink}</div>
+    <div class="pal-rolls">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;margin-bottom:4px;">Rollos en tarima</div>
+      ${rollRows}
+    </div>
+  </div>`;
+}
+
+// ═══ BÁSCULA LOCAL ════════════════════════════════════════════════════════════
+const SCALE_AGENT_URL = "http://127.0.0.1:8787";
+const SCALE_POLL_MS   = 300;
+
+let lastScaleData  = null;
+let scalePollTimer = null;
+let scaleFailCount = 0;
+
+function initScaleIntegration() {
+  if (IS_ALM) return;
+  // Restaurar config guardada en localStorage
+  const savedPort = localStorage.getItem("biotecnica_scale_port");
+  const savedBaud = localStorage.getItem("biotecnica_scale_baudrate");
+  if (savedPort && $("scalePortInput")) $("scalePortInput").value = savedPort;
+  if (savedBaud && $("scaleBaudInput")) $("scaleBaudInput").value = savedBaud;
+  pollScale();
+}
+
+function pollScale() {
+  fetchScaleWeight()
+    .then(data => {
+      scaleFailCount = 0;
+      lastScaleData  = data;
+      renderScaleStatus(data);
+    })
+    .catch(() => {
+      scaleFailCount++;
+      // Log limitado: solo en el 1er fallo y cada 20 intentos (evitar spam en consola)
+      if (scaleFailCount === 1 || scaleFailCount % 20 === 0) {
+        console.warn("[scale] Agente local no disponible. Intentos:", scaleFailCount);
+      }
+      lastScaleData = null;
+      renderScaleStatus(null);
+    })
+    .finally(() => {
+      scalePollTimer = setTimeout(pollScale, SCALE_POLL_MS);
+    });
+}
+
+async function fetchScaleWeight() {
+  const ctrl = new AbortController();
+  const tid   = setTimeout(() => ctrl.abort(), 500);
+  try {
+    const r = await fetch(`${SCALE_AGENT_URL}/weight`, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+function renderScaleStatus(data) {
+  const statusEl = $("scaleStatus");
+  const weightEl = $("scaleLiveWeight");
+  const stabilEl = $("scaleStability");
+  const rawEl    = $("scaleRaw");
+  const ageEl    = $("scaleAge");
+  const errorEl  = $("scaleError");
+  const useBtn   = $("scaleUseBtn");
+  const warnEl   = $("scaleWarning");
+  if (!statusEl) return;
+
+  if (!data) {
+    statusEl.textContent = "Agente local no disponible";
+    statusEl.className   = "scale-status sc-off";
+    weightEl.textContent = "—";
+    stabilEl.textContent = ""; stabilEl.className = "scale-stability";
+    rawEl.textContent    = "";
+    ageEl.textContent    = "";
+    errorEl.textContent  = "";
+    warnEl.style.display = "none";
+    if (useBtn) useBtn.disabled = true;
+    return;
+  }
+
+  // "efectivamente activo" = conectado a hardware O en modo simulación
+  const effectivelyActive = data.connected || data.simulation;
+
+  if (!effectivelyActive) {
+    statusEl.textContent = data.error || "Sin conexión";
+    statusEl.className   = "scale-status sc-err";
+    weightEl.textContent = "—";
+    stabilEl.textContent = ""; stabilEl.className = "scale-stability";
+    rawEl.textContent    = data.raw   || "";
+    ageEl.textContent    = "";
+    errorEl.textContent  = data.error || "";
+    warnEl.style.display = "none";
+    if (useBtn) useBtn.disabled = true;
+    return;
+  }
+
+  // Conectada (hardware o simulación)
+  if (data.simulation && !data.connected) {
+    statusEl.textContent = "Simulación activa";
+    statusEl.className   = "scale-status sc-sim";
+  } else {
+    statusEl.textContent = `Conectada — ${data.port || ""}${data.baudrate ? " @" + data.baudrate : ""}`;
+    statusEl.className   = "scale-status sc-ok";
+  }
+
+  if (data.weight_kg != null && Number.isFinite(data.weight_kg)) {
+    weightEl.textContent = data.weight_kg.toFixed(3) + " kg";
+    if (useBtn) useBtn.disabled = false;
+  } else {
+    weightEl.textContent = "— kg";
+    if (useBtn) useBtn.disabled = true;
+  }
+
+  if (data.stable === true) {
+    stabilEl.textContent = "✓ Estable";
+    stabilEl.className   = "scale-stability stable";
+  } else if (data.stable === false) {
+    stabilEl.textContent = "⚠ Inestable";
+    stabilEl.className   = "scale-stability unstable";
+  } else {
+    stabilEl.textContent = "Sin dato de estabilidad";
+    stabilEl.className   = "scale-stability";
+  }
+
+  rawEl.textContent   = data.raw ? "RAW: " + data.raw : "";
+  // age_ms: mostrar en formato legible (ms → s si > 10s)
+  if (data.age_ms != null) {
+    ageEl.textContent = data.age_ms < 10000
+      ? "Hace " + data.age_ms + " ms"
+      : "Hace " + (data.age_ms / 1000).toFixed(1) + " s";
+  } else {
+    ageEl.textContent = "";
+  }
+  errorEl.textContent = data.error || "";
+  warnEl.style.display = "none";
+}
+
+async function saveScaleConfig() {
+  const port     = ($("scalePortInput").value || "").trim();
+  const baudrate = parseInt($("scaleBaudInput").value || "9600");
+  try {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 2000);
+    const r = await fetch(`${SCALE_AGENT_URL}/config`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ port: port || null, baudrate }),
+      signal:  ctrl.signal,
+    });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    localStorage.setItem("biotecnica_scale_port",     port);
+    localStorage.setItem("biotecnica_scale_baudrate", baudrate);
+    toast("Configuración de báscula guardada", "ok");
+  } catch (e) {
+    toast("Error al guardar config báscula: " + e.message, "err");
+  }
+}
+
+function applyScaleWeight() {
+  if (!lastScaleData || !Number.isFinite(lastScaleData.weight_kg)) {
+    toast("Sin lectura válida de báscula", "err");
+    return;
+  }
+  const val = Number(lastScaleData.weight_kg).toFixed(3);
+  $("gwInput").value = val;
+  $("gwInput").dispatchEvent(new Event("input",  { bubbles: true }));
+  $("gwInput").dispatchEvent(new Event("change", { bubbles: true }));
+  updateNetInfo();
+  checkReady();
+
+  const warnEl = $("scaleWarning");
+  if (lastScaleData.stable === false) {
+    warnEl.textContent   = "⚠ Peso inestable: verifica antes de registrar.";
+    warnEl.style.display = "block";
+  } else {
+    warnEl.style.display = "none";
+  }
+
+  toast("Peso de báscula aplicado: " + val + " kg", "ok");
+}
+
+// Init
+(async function initOperator(){
+  await loadOperators();                         // restaura el operador guardado en el dropdown
+  const opId = localStorage.getItem("opId");
+  if(opId){                                      // re-autentica para tener token fresco
+    try {
+      const d = await api("/auth/select-operator",{method:"POST",body:JSON.stringify({user_id:parseInt(opId)})});
+      localStorage.setItem("token", d.access_token);
+    } catch(e){}
+  }
+  await loadMachines();                          // /config/machines requiere token: ahora sí carga
+  checkReady();
+})();
+initScaleIntegration();
+window.addEventListener("load",()=>{ IS_ALM ? $("almPayInput").focus() : $("payInput").focus(); });
+</script>
+</body>
+</html>
