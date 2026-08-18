@@ -13,47 +13,69 @@
     .label {
       box-sizing: border-box;
       width: 4in; height: 3in;
-      padding: 0.10in 0.14in;
-      color: #111827; position: relative; overflow: hidden;
-      border: 2px solid {% if branding_mode == 'distributor' %}#1e40af{% else %}#234d1f{% endif %};
-      background: {% if branding_mode == 'distributor' %}#eff6ff{% else %}#ffffff{% endif %};
+      padding: 0.09in;
+      color: #000; background: #fff;
+      position: relative; overflow: hidden;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     }
 
-    /* ── Header ── */
-    .header { display: flex; justify-content: space-between; align-items: flex-start;
-              border-bottom: 1.5px solid {% if branding_mode == 'distributor' %}#1e40af{% else %}#234d1f{% endif %};
-              padding-bottom: 4px; }
-    .brand-block { display: flex; align-items: center; gap: 6px; }
-    .logo { height: 0.42in; width: auto; object-fit: contain; }
-    .stage { font-size: 13px; font-weight: 900; letter-spacing: .04em;
-             color: {% if branding_mode == 'distributor' %}#1e3a8a{% else %}#065f46{% endif %}; line-height: 1.05; }
-    .stage small { display: block; font-size: 8px; font-weight: 700; color: #6b7280; letter-spacing: .12em; }
-    .code-block { text-align: right; }
-    .rollo { font-size: 17px; font-weight: 900; line-height: 1; }
-    .rollnum { font-size: 9px; color: #374151; }
-    .reprint-warn { background: #ef4444; color: white; font-size: 8px; font-weight: 800;
-                    padding: 1px 6px; border-radius: 3px; margin-top: 2px; display: inline-block; }
+    /* Marco negro impreso (el rectángulo de la etiqueta física) */
+    .frame {
+      box-sizing: border-box;
+      width: 100%; height: 100%;
+      border: 1.5px solid #000;
+      padding: 0.08in 0.11in 0.07in;
+      display: flex; flex-direction: column;
+    }
 
-    /* ── Body ── */
-    .body { display: flex; gap: 8px; margin-top: 5px; }
-    .info { flex: 1.5; min-width: 0; }
-    .row { font-size: 9.5px; line-height: 1.35; }
-    .row strong { display: inline-block; min-width: 52px; color: #374151; }
-    .right { flex: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; }
+    /* ── ROLLO (esquina superior derecha) ── */
+    .rollo-row { display: flex; justify-content: flex-end; align-items: baseline; gap: 10px; }
+    .rollo { font-size: 20px; font-weight: 700; letter-spacing: .02em; }
+    .rollo b { font-weight: 900; }
+    .reprint-warn { font-size: 9px; font-weight: 900; border: 1px solid #000; padding: 1px 5px; }
 
-    .big-kg { font-size: 30px; font-weight: 900; color: #065f46; line-height: 1; text-align: right; }
-    .big-kg small { font-size: 11px; font-weight: 700; color: #374151; }
-    .breakdown { font-size: 8px; color: #6b7280; text-align: right; margin-top: 2px; }
+    /* ── Logo + título ── */
+    .title-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .logo { height: 0.34in; width: auto; object-fit: contain; }
+    .title { font-size: 12.5px; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
 
-    /* ── Footer / barcode ── */
-    .footer { position: absolute; left: 0.14in; right: 0.14in; bottom: 0.10in;
-              display: flex; justify-content: space-between; align-items: flex-end; }
-    .barcode img { height: 0.42in; width: auto; object-fit: fill; background: white; }
-    .barcode .val { font-size: 8px; font-family: monospace; text-align: center; margin-top: -1px; }
-    .print-meta { font-size: 8px; color: #374151; text-align: right; }
-    .mode-badge { display:inline-block; font-size: 8px; font-weight: 800; padding: 1px 6px; border-radius: 3px;
-                  background: {% if branding_mode == 'distributor' %}#1e40af{% else %}#065f46{% endif %}; color: white; }
+    .rule { border-bottom: 1.5px solid #000; margin-top: 4px; }
+
+    /* ── Cuerpo: columna de campos + sello APROBADO ──
+       --field-size es reducido por JS (ver fitLabel) cuando un texto largo
+       (p.ej. PRODUCTO libre de Aspel) no cabe, para nunca cortar el
+       CANTIDAD/código de barras de abajo. */
+    .content { display: flex; flex: 1; min-height: 0; margin-top: 6px; gap: 6px; }
+    .fields { --field-size: 15px; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-evenly; }
+    .frow { display: flex; align-items: baseline; gap: 6px; }
+    .f { font-size: var(--field-size); line-height: var(--field-lh, 1.2); }
+    .f.grow { flex: 1 1 auto; min-width: 0; }
+    .f.side { flex: 0 0 auto; white-space: nowrap; }
+    .f .k { font-weight: 400; }
+    .f .v { font-weight: 700; text-decoration: underline; text-underline-offset: 2px;
+            word-break: break-word; }
+
+    /* ── Sello APROBADO (vertical, borde) ── */
+    .aprobado {
+      flex: 0 0 auto; align-self: center;
+      border: 1.5px solid #000; padding: 8px 3px;
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-size: 14px; font-weight: 700; letter-spacing: .08em;
+      text-align: center;
+    }
+
+    /* ── Zona inferior: CANTIDAD + código de barras ── */
+    .bottom {
+      margin-top: 6px;
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+    }
+    .cantidad { font-size: 15px; font-weight: 400; white-space: nowrap; }
+    .cantidad .v { font-size: 32px; font-weight: 900; text-decoration: underline;
+                   text-underline-offset: 3px; letter-spacing: -.01em; }
+    .cantidad .mode { font-size: 10px; font-weight: 700; }
+    .barcode { text-align: center; }
+    .barcode img { height: 0.46in; max-width: 1.9in; width: auto; object-fit: fill; background: #fff; display: block; }
+    .barcode .val { font-size: 10.5px; font-family: "Courier New", monospace; letter-spacing: .08em; margin-top: -2px; }
 
     .btns { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
@@ -63,84 +85,80 @@
     @media print {
       .btns { display: none; }
       body { background: white; padding: 0; }
-      .label { box-shadow: none; border: none; }
+      .label { box-shadow: none; }
     }
   </style>
 </head>
 <body>
 <div class="sheet">
   <div class="label">
+    <div class="frame">
 
-    <!-- ── HEADER ── -->
-    <div class="header">
-      <div class="brand-block">
+      <!-- ── ROLLO ── -->
+      <div class="rollo-row">
+        {% if is_reprint %}<span class="reprint-warn">REIMPRESIÓN #{{ print_number }}</span>{% endif %}
+        <span class="rollo">ROLLO: <b>{{ item.roll_number or item.item_code }}</b></span>
+      </div>
+
+      <!-- ── LOGO + TÍTULO ── -->
+      <div class="title-row">
         {% if branding_mode != 'distributor' %}
         <img class="logo" src="{{ logo_url }}" alt="Biotécnica" />
-        <div class="stage">{{ stage_label }}<small>BIOTÉCNICA</small></div>
-        {% else %}
-        <div class="stage" style="font-size:12px;">DISTRIBUIDOR<small>ETIQUETA DE PRODUCTO</small></div>
         {% endif %}
+        <div class="title">ETIQUETA DE {{ stage_label }}</div>
       </div>
-      <div class="code-block">
-        {% if branding_mode != 'distributor' %}
-        <div class="rollo">{{ item.item_code }}</div>
-        {% if item.roll_number %}<div class="rollnum">Rollo #{{ item.roll_number }}</div>{% endif %}
-        {% else %}
-        <span class="mode-badge">DISTRIBUIDOR</span>
-        {% endif %}
-        {% if is_reprint %}<div class="reprint-warn">REIMPRESIÓN #{{ print_number }}</div>{% endif %}
-      </div>
-    </div>
+      <div class="rule"></div>
 
-    <!-- ── BODY ── -->
-    <div class="body">
-      <div class="info">
-        {% if branding_mode != 'distributor' %}
-        <div class="row"><strong>CLIENTE:</strong> {{ customer.name if customer else '—' }}</div>
-        {% endif %}
-        <div class="row"><strong>PRODUCTO:</strong> {{ line.product_description if line else '—' }}</div>
-        <div class="row"><strong>MEDIDA:</strong> {{ line.measure if (line and line.measure) else '—' }}
-          &nbsp;<strong style="min-width:auto;">CAL:</strong> {{ line.caliber if (line and line.caliber) else '—' }}</div>
-        {% if line and line.color %}<div class="row"><strong>COLOR:</strong> {{ line.color }}</div>{% endif %}
-        <div class="row"><strong>PI/PAY:</strong> {{ order.sae_order_number if order else '—' }}
-          {% if line %}&nbsp;<strong style="min-width:auto;">LÍN:</strong> {{ line.line_number }}{% endif %}</div>
-        <div class="row"><strong>FECHA:</strong> {{ item.created_at.strftime('%d/%m/%Y') if item.created_at else '' }}</div>
-        {% if branding_mode != 'distributor' %}
-        <div class="row">
-          {% if item.shift %}<strong>TURNO:</strong> {{ item.shift }}{% endif %}
-          {% if machine %}&nbsp;<strong style="min-width:auto;">MÁQ:</strong> {{ machine.machine_name }}{% endif %}
-        </div>
-        {% if operator %}<div class="row"><strong>OPER:</strong> {{ operator.full_name }}</div>{% endif %}
-        {% endif %}
-      </div>
+      <!-- ── CUERPO: CAMPOS + SELLO ── -->
+      <div class="content">
+        <div class="fields">
+          {% if branding_mode != 'distributor' %}
+          <div class="frow"><div class="f grow"><span class="k">CLIENTE:</span> <span class="v">{{ customer.name if customer else '—' }}</span></div></div>
+          {% endif %}
 
-      <div class="right">
-        <div class="big-kg">
-          {{ '%.3f'|format(printed_weight_kg) }}<small> KG</small>
-          <div style="font-size:10px; font-weight:700; color:#374151;">
-            ({{ 'BRUTO' if print_weight_mode == 'gross' else 'NETO' }})
+          <div class="frow">
+            <div class="f grow"><span class="k">PRODUCTO:</span> <span class="v">{{ line.product_description if line else '—' }}</span></div>
+            <div class="f side"><span class="k">CALIBRE:</span> <span class="v">{{ line.caliber if (line and line.caliber) else '—' }}</span></div>
           </div>
-        </div>
-        {% if branding_mode != 'distributor' and item.bobbin_weight_kg %}
-        <div class="breakdown">
-          Bruto {{ '%.3f'|format(item.gross_weight or 0) }} · Tara {{ '%.3f'|format(item.bobbin_weight_kg) }} · Neto {{ '%.3f'|format(item.net_weight or 0) }}
-        </div>
-        {% endif %}
-      </div>
-    </div>
 
-    <!-- ── FOOTER ── -->
-    <div class="footer">
-      <div class="barcode">
-        <img src="{{ barcode_path }}" alt="Barcode {{ item.barcode_value or item.item_code }}" />
-        <div class="val">{{ item.barcode_value or item.item_code }}</div>
-      </div>
-      <div class="print-meta">
-        <div><strong>{{ 'REIMP.' if is_reprint else 'IMP.' }} #{{ print_number }}</strong></div>
-        <div>APROBADO ✓</div>
-      </div>
-    </div>
+          <div class="frow">
+            <div class="f grow"><span class="k">MEDIDA:</span> <span class="v">{{ line.measure if (line and line.measure) else '—' }}</span></div>
+            <div class="f side"><span class="k">TURNO:</span> <span class="v">{{ item.shift or '—' }}</span></div>
+          </div>
 
+          {% if line and line.color %}
+          <div class="frow"><div class="f grow"><span class="k">COLOR:</span> <span class="v">{{ line.color }}</span></div></div>
+          {% endif %}
+
+          {% if branding_mode != 'distributor' %}
+          <div class="frow">
+            <div class="f grow"><span class="k">OPERADOR:</span> <span class="v">{{ operator.full_name if operator else '—' }}</span></div>
+            <div class="f side"><span class="k">PI:</span> <span class="v">{{ order.sae_order_number if order else '—' }}</span></div>
+          </div>
+          <div class="frow"><div class="f grow"><span class="k">MÁQUINA:</span> <span class="v">{{ machine.machine_name if machine else '—' }}</span></div></div>
+          {% else %}
+          <div class="frow"><div class="f grow"><span class="k">PI:</span> <span class="v">{{ order.sae_order_number if order else '—' }}</span></div></div>
+          {% endif %}
+
+          <div class="frow"><div class="f grow"><span class="k">FECHA:</span> <span class="v">{{ item.created_at.strftime('%d/%m/%Y') if item.created_at else '—' }}</span></div></div>
+        </div>
+
+        <div class="aprobado">APROBADO</div>
+      </div>
+
+      <!-- ── CANTIDAD + CÓDIGO DE BARRAS ── -->
+      <div class="bottom">
+        <div class="cantidad">
+          CANTIDAD: <span class="v">{{ '%.1f'|format(printed_weight_kg) }} KG</span>
+          <span class="mode">({{ 'BRUTO' if print_weight_mode == 'gross' else 'NETO' }})</span>
+        </div>
+        <div class="barcode">
+          <img src="{{ barcode_path }}" alt="Barcode {{ item.barcode_value or item.item_code }}" />
+          <div class="val">{{ item.barcode_value or item.item_code }}</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -149,9 +167,42 @@
   <button class="back-btn" onclick="window.history.back()">← Volver</button>
 </div>
 <script>
-  if (new URLSearchParams(window.location.search).get("autoprint") === "1") {
-    window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+  // Si el contenido (p.ej. un PRODUCTO muy largo) no cabe en la etiqueta física,
+  // reduce el tamaño de los campos hasta que quepa completo. Nunca se recorta
+  // texto ni se empuja CANTIDAD/código de barras fuera de la etiqueta.
+  function fitLabel() {
+    const frame  = document.querySelector(".frame");
+    const fields = document.querySelector(".fields");
+    const title  = document.querySelector(".title");
+    // .fields vive dentro de un flex con overflow visible: si se desborda,
+    // el texto pinta encima de CANTIDAD/barcode sin que frame.scrollHeight
+    // lo refleje, así que hay que medir .fields directamente.
+    const overflows = () =>
+      fields.scrollHeight > fields.clientHeight + 0.5 ||
+      frame.scrollHeight > frame.clientHeight + 0.5;
+    let fieldSize = 15, fieldLH = 1.2, titleSize = 12.5, guard = 0;
+    while (overflows() && guard < 60) {
+      if (fieldSize > 8) {
+        fieldSize -= 0.5;
+        fields.style.setProperty("--field-size", fieldSize + "px");
+      } else if (fieldLH > 1.0) {
+        fieldLH -= 0.05;
+        fields.style.setProperty("--field-lh", fieldLH.toFixed(2));
+      } else if (titleSize > 8.5) {
+        titleSize -= 0.5;
+        title.style.fontSize = titleSize + "px";
+      } else {
+        break;
+      }
+      guard++;
+    }
   }
+  window.addEventListener("load", () => {
+    fitLabel();
+    if (new URLSearchParams(window.location.search).get("autoprint") === "1") {
+      setTimeout(() => window.print(), 400);
+    }
+  });
 </script>
 </body>
 </html>

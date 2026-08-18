@@ -4,128 +4,256 @@
   <meta charset="UTF-8" />
   <title>Tarima {{ pallet.pallet_code }}</title>
   <style>
-    /* ── Stock 4 in de ancho; el alto crece según el nº de rollos de la tarima ── */
-    @page { size: 4in auto; margin: 0; }
+    /* ── Etiqueta de tarima: se imprime en varias etiquetas de tamaño normal
+       (4 x 3, igual que la de rollo) en vez de una sola etiqueta gigante. La
+       página 1 lleva el encabezado completo; las siguientes repiten un
+       mini-encabezado (código + barcode + "Hoja X/N") para que cada etiqueta
+       quede identificada aunque se separen físicamente. ── */
+    @page { size: 4in 3in; margin: 0; }
 
     body { font-family: Arial, Helvetica, sans-serif; background: #e5e7eb; margin: 0; padding: 18px; }
-    .sheet { display: flex; justify-content: center; }
-    .label {
+    .sheet { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+    .page {
       box-sizing: border-box;
-      width: 4in; min-height: 3in;
+      width: 4in; height: 3in;
       background: #ffffff; border: 2px solid #065f46;
-      padding: 0.12in 0.16in; color: #111827;
+      padding: 0.1in 0.14in; color: #111827;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: flex; flex-direction: column;
+      break-after: page; page-break-after: always;
     }
+    .page:last-child { break-after: auto; page-break-after: auto; }
 
     .header { display: flex; align-items: center; gap: 8px;
               border-bottom: 1.5px solid #065f46; padding-bottom: 5px; }
-    .logo { height: 0.46in; width: auto; object-fit: contain; }
+    .logo { height: 0.42in; width: auto; object-fit: contain; }
     .htxt .brand { font-size: 13px; font-weight: 900; color: #065f46; line-height: 1; }
     .htxt .ttl   { font-size: 10px; font-weight: 800; letter-spacing: .04em; }
     .htxt .code  { font-size: 14px; font-weight: 900; }
+    .hoja        { font-size: 8px; font-weight: 700; color: #374151; margin-top: 2px; }
 
-    .row { font-size: 10px; line-height: 1.4; }
+    .row { font-size: 10px; line-height: 1.35; }
     .row strong { display: inline-block; min-width: 64px; color: #374151; }
-    .big-total { font-size: 28px; font-weight: 900; color: #065f46; line-height: 1; margin: 6px 0 2px; }
-    .big-total small { font-size: 12px; font-weight: 700; color: #374151; }
+    .big-total { font-size: 24px; font-weight: 900; color: #065f46; line-height: 1; margin: 5px 0 2px; }
+    .big-total small { font-size: 11px; font-weight: 700; color: #374151; }
 
-    .barcode { text-align: center; margin: 8px 0; }
-    .barcode img { height: 0.5in; width: auto; object-fit: fill; background: white; }
+    .barcode { text-align: center; margin: 6px 0; }
+    .barcode img { height: 0.42in; width: auto; object-fit: fill; background: white; }
     .barcode .val { font-size: 9px; font-family: monospace; margin-top: -1px; }
 
     .section-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
-                     color: #065f46; margin: 8px 0 4px; border-top: 1px solid #065f46; padding-top: 4px; }
-    .line-card { border: 1px solid #a7f3d0; border-radius: 5px; padding: 4px 7px; margin-bottom: 4px; }
-    .line-card .prod { font-size: 10px; font-weight: 700; }
-    .line-card .meta { font-size: 8.5px; color: #374151; }
-    .line-card .totals { font-size: 9px; font-weight: 700; color: #065f46; margin-top: 1px; }
+                     color: #065f46; margin: 6px 0 3px; border-top: 1px solid #065f46; padding-top: 3px; }
+    .line-card { border: 1px solid #a7f3d0; border-radius: 5px; padding: 3px 7px; margin-bottom: 3px; }
+    .line-card .prod { font-size: 9.5px; font-weight: 700; }
+    .line-card .meta { font-size: 8px; color: #374151; }
+    .line-card .totals { font-size: 8.5px; font-weight: 700; color: #065f46; margin-top: 1px; }
     .line-card .totals span { margin-right: 10px; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5px; }
+    /* ── Mini-encabezado de las etiquetas de continuación ── */
+    .mini-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border-bottom: 1.5px solid #065f46; padding-bottom: 4px; margin-bottom: 4px;
+    }
+    .mini-header .code { font-size: 13px; font-weight: 900; color: #065f46; }
+    .mini-header .mini-barcode { text-align: center; }
+    .mini-header .mini-barcode img { height: 0.3in; width: auto; object-fit: fill; background: white; }
+    .mini-header .mini-barcode .val { font-size: 7px; font-family: monospace; }
+
+    /* ── Tabla de rollos: cada página mide su propio contenedor de filas
+       (overflow:hidden + altura fija por flex) y detiene el llenado apenas
+       una fila más no cabría, empezando una página nueva en vez de recortar
+       o encimar contenido. ── */
+    .rows-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
     th { background: #065f46; color: white; padding: 3px 5px; text-align: left; }
     td { border: 1px solid #9ca3af; padding: 2px 5px; }
     tr:nth-child(even) td { background: #f0fdf4; }
 
-    .btns { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+    .btns { display: flex; justify-content: center; gap: 12px; margin-top: 4px; }
     button { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     .print-btn { background: #111827; color: white; }
     .back-btn  { background: #d1d5db; }
-    @media print { .btns { display: none; } body { background: white; padding: 0; } .label { box-shadow: none; border: none; } }
+    @media print { .btns { display: none; } body { background: white; padding: 0; } .sheet { gap: 0; } .page { box-shadow: none; } }
   </style>
 </head>
 <body>
-<div class="sheet">
-  <div class="label">
 
-    <div class="header">
-      <img class="logo" src="{{ logo_url }}" alt="Biotécnica" />
-      <div class="htxt" style="flex:1;">
-        <div class="brand">Biotécnica</div>
-        <div class="ttl">TARIMA / PALLET</div>
-      </div>
-      <div class="htxt" style="text-align:right;">
-        <div class="code">{{ pallet.pallet_code }}</div>
-      </div>
-    </div>
-
-    <div class="barcode">
-      <img src="{{ barcode_path }}" alt="Barcode {{ pallet.pallet_code }}" />
-      <div class="val">{{ pallet.pallet_code }}</div>
-    </div>
-
-    <div class="row"><strong>PEDIDO (PI):</strong> {{ order.sae_order_number if order else '—' }}</div>
-    <div class="row"><strong>CLIENTE:</strong> {{ customer.name if customer else '—' }}</div>
-    <div class="row"><strong>FECHA:</strong> {{ pallet.created_at.strftime('%d/%m/%Y %H:%M') if pallet.created_at else '' }}
-      {% if pallet.closed_at %}&nbsp;·&nbsp;<strong style="min-width:auto;">CERRADA:</strong> {{ pallet.closed_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}</div>
-
-    <div class="big-total">{{ '%.3f'|format(total_gross_kg) }}<small> KG BRUTO</small></div>
-    {% if total_net_kg and total_net_kg != total_gross_kg %}
-    <div class="row">Peso neto total: {{ '%.3f'|format(total_net_kg) }} kg</div>
-    {% endif %}
-    <div class="row"><strong>TOTAL ROLLOS:</strong> {{ total_rolls }}</div>
-
-    {% if summary_by_line %}
-    <div class="section-title">Contenido por línea</div>
-    {% for g in summary_by_line %}
-    <div class="line-card">
-      <div class="prod">{{ g.product_description }}</div>
-      <div class="meta">Medida: {{ g.measure or '—' }} · Calibre: {{ g.caliber or '—' }}{% if g.color %} · Color: {{ g.color }}{% endif %}</div>
-      <div class="totals">
-        <span>{{ g.roll_count }} rollo(s)</span>
-        <span>Bruto {{ '%.3f'|format(g.gross_weight_total) }} kg</span>
-        <span>Neto {{ '%.3f'|format(g.net_weight_total) }} kg</span>
-      </div>
-    </div>
-    {% endfor %}
-    {% endif %}
-
-    <table>
-      <thead>
-        <tr><th>Código</th><th>Barcode</th><th>Bruto</th><th>Tara</th><th>Neto</th></tr>
-      </thead>
-      <tbody>
-        {% for item in items %}
-        <tr>
-          <td>{{ item.item_code }}</td>
-          <td>{{ item.barcode_value or item.item_code }}</td>
-          <td>{{ '%.3f'|format(item.gross_weight or 0) }}</td>
-          <td>{{ '%.3f'|format(item.bobbin_weight_kg or 0) }}</td>
-          <td>{{ '%.3f'|format(item.net_weight or 0) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<!-- Datos crudos (ocultos): la paginación real la arma el script de abajo -->
+<div id="source" hidden>
+  <div class="meta"
+       data-code="{{ pallet.pallet_code }}"
+       data-pedido="{{ order.sae_order_number if order else '—' }}"
+       data-cliente="{{ customer.name if customer else '—' }}"
+       data-fecha="{{ pallet.created_at.strftime('%d/%m/%Y %H:%M') if pallet.created_at else '' }}{% if pallet.closed_at %} · CERRADA: {{ pallet.closed_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}"
+       data-total-gross="{{ '%.3f'|format(total_gross_kg) }}"
+       data-total-net="{{ '%.3f'|format(total_net_kg) if (total_net_kg and total_net_kg != total_gross_kg) else '' }}"
+       data-total-rolls="{{ total_rolls }}"></div>
+  {% for g in summary_by_line %}
+  <div class="line-src"
+       data-prod="{{ g.product_description }}"
+       data-meta="Medida: {{ g.measure or '—' }} · Calibre: {{ g.caliber or '—' }}{% if g.color %} · Color: {{ g.color }}{% endif %}"
+       data-rolls="{{ g.roll_count }}"
+       data-bruto="{{ '%.3f'|format(g.gross_weight_total) }}"
+       data-neto="{{ '%.3f'|format(g.net_weight_total) }}"></div>
+  {% endfor %}
+  {% for item in items %}
+  <div class="row-src"
+       data-code="{{ item.item_code }}"
+       data-barcode="{{ item.barcode_value or item.item_code }}"
+       data-bruto="{{ '%.3f'|format(item.gross_weight or 0) }}"
+       data-tara="{{ '%.3f'|format(item.bobbin_weight_kg or 0) }}"
+       data-neto="{{ '%.3f'|format(item.net_weight or 0) }}"></div>
+  {% endfor %}
 </div>
+
+<div class="sheet" id="pages"></div>
 
 <div class="btns">
   <button class="print-btn" onclick="window.print()">🖨 Imprimir</button>
   <button class="back-btn" onclick="window.close()">Cerrar</button>
 </div>
+
 <script>
-  if (new URLSearchParams(window.location.search).get("autoprint") === "1") {
-    window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+(function () {
+  const BARCODE_SRC = "{{ barcode_path }}";
+  const LOGO_SRC     = "{{ logo_url }}";
+
+  const src      = document.getElementById("source");
+  const meta     = src.querySelector(".meta").dataset;
+  const lineEls  = Array.from(src.querySelectorAll(".line-src"));
+  const rowEls   = Array.from(src.querySelectorAll(".row-src"));
+  const pagesEl  = document.getElementById("pages");
+  const pages    = [];
+
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
   }
+
+  function buildFullHeader(page) {
+    const header = el("div", "header");
+    header.innerHTML =
+      '<img class="logo" src="' + LOGO_SRC + '" alt="Biotécnica" />' +
+      '<div class="htxt" style="flex:1;">' +
+        '<div class="brand">Biotécnica</div>' +
+        '<div class="ttl">TARIMA / PALLET</div>' +
+      "</div>" +
+      '<div class="htxt" style="text-align:right;">' +
+        '<div class="code">' + meta.code + "</div>" +
+        '<div class="hoja"></div>' +
+      "</div>";
+    page.appendChild(header);
+
+    page.appendChild(el("div", "barcode",
+      '<img src="' + BARCODE_SRC + '" alt="Barcode ' + meta.code + '">' +
+      '<div class="val">' + meta.code + "</div>"));
+
+    page.appendChild(el("div", "row", "<strong>PEDIDO (PI):</strong> " + meta.pedido));
+    page.appendChild(el("div", "row", "<strong>CLIENTE:</strong> " + meta.cliente));
+    page.appendChild(el("div", "row", "<strong>FECHA:</strong> " + meta.fecha));
+
+    page.appendChild(el("div", "big-total", (meta.totalGross || "0.000") + "<small> KG BRUTO</small>"));
+    if (meta.totalNet) {
+      page.appendChild(el("div", "row", "Peso neto total: " + meta.totalNet + " kg"));
+    }
+    page.appendChild(el("div", "row", "<strong>TOTAL ROLLOS:</strong> " + meta.totalRolls));
+
+    if (lineEls.length) {
+      page.appendChild(el("div", "section-title", "Contenido por línea"));
+      lineEls.forEach(function (le) {
+        page.appendChild(el("div", "line-card",
+          '<div class="prod">' + le.dataset.prod + "</div>" +
+          '<div class="meta">' + le.dataset.meta + "</div>" +
+          '<div class="totals">' +
+            "<span>" + le.dataset.rolls + " rollo(s)</span>" +
+            "<span>Bruto " + le.dataset.bruto + " kg</span>" +
+            "<span>Neto " + le.dataset.neto + " kg</span>" +
+          "</div>"));
+      });
+    }
+  }
+
+  function buildMiniHeader(page) {
+    const mh = el("div", "mini-header");
+    mh.innerHTML =
+      '<div class="code">' + meta.code + "</div>" +
+      '<div class="mini-barcode">' +
+        '<img src="' + BARCODE_SRC + '" alt="Barcode ' + meta.code + '">' +
+        '<div class="val">' + meta.code + "</div>" +
+      "</div>" +
+      '<div class="hoja"></div>';
+    page.appendChild(mh);
+  }
+
+  function newPage(isFirst) {
+    const page = el("div", "page");
+    if (isFirst) buildFullHeader(page); else buildMiniHeader(page);
+
+    const rowsWrap = el("div", "rows-wrap");
+    const table = el("table", null,
+      "<thead><tr><th>Código</th><th>Barcode</th><th>Bruto</th><th>Tara</th><th>Neto</th></tr></thead>" +
+      "<tbody></tbody>");
+    rowsWrap.appendChild(table);
+    page.appendChild(rowsWrap);
+
+    pagesEl.appendChild(page);
+    const entry = { page: page, rowsWrap: rowsWrap, tbody: table.querySelector("tbody") };
+    pages.push(entry);
+    return entry;
+  }
+
+  function paginate() {
+    let idx = 0;
+    let cur = newPage(true);
+    let isFirstPage = true; // la página 1 tiene un encabezado grande y casi
+                             // nunca deja espacio para filas; una fila que no
+                             // quepa ahí se manda a la página 2 (mucho más
+                             // libre) en vez de forzarla en un espacio inexistente.
+
+    while (idx < rowEls.length) {
+      const r  = rowEls[idx];
+      const tr = el("tr", null,
+        "<td>" + r.dataset.code + "</td>" +
+        "<td>" + r.dataset.barcode + "</td>" +
+        "<td>" + r.dataset.bruto + "</td>" +
+        "<td>" + r.dataset.tara + "</td>" +
+        "<td>" + r.dataset.neto + "</td>");
+      cur.tbody.appendChild(tr);
+
+      if (cur.rowsWrap.scrollHeight > cur.rowsWrap.clientHeight) {
+        cur.tbody.removeChild(tr);
+        const wasEmpty = cur.tbody.children.length === 0;
+        if (wasEmpty && !isFirstPage) {
+          // ni siquiera una fila sola cabe en una página de continuación
+          // recién creada (caso extremo): se fuerza para no perder el rollo
+          // silenciosamente, en vez de entrar en loop infinito.
+          cur.tbody.appendChild(tr);
+          idx++;
+        }
+        cur = newPage(false);
+        isFirstPage = false;
+        continue;
+      }
+      idx++;
+    }
+
+    const total = pages.length;
+    pages.forEach(function (p, i) {
+      p.page.querySelectorAll(".hoja").forEach(function (h) {
+        h.textContent = "Hoja " + (i + 1) + " / " + total;
+      });
+    });
+  }
+
+  paginate();
+
+  if (new URLSearchParams(window.location.search).get("autoprint") === "1") {
+    setTimeout(function () { window.print(); }, 400);
+  }
+})();
 </script>
 </body>
 </html>
