@@ -33,7 +33,7 @@ const char* WIFI_PASS   = "Bio_503.*";
 const char* MQTT_HOST   = "PENDIENTE_IP_SERVER";
 const int   MQTT_PORT   = 1883;
 
-const int   MACHINE_ID  = 2;                 // = machines.machine_id (1=Cortadora 1, 2=Extrusora 1). ¡Único por ESP!
+const int   MACHINE_ID  = 1;                 // = machines.machine_id (1=Cortadora 1, 2=Extrusora 1). ¡Único por ESP!
 const int   MAGNETS     = 1;                 // imanes pegados al rodillo (normalmente 1)
 // ─────────────────────────────────────────────────────────────────────────────
 
