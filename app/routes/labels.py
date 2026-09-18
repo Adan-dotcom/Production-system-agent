@@ -35,9 +35,13 @@ def build_barcode_png(barcode_value: str, filename_key: str) -> str:
     safe_key  = filename_key.replace("/", "_").replace("\\", "_")
     file_path = LABELS_DIR / f"{safe_key}.png"
     writer    = ImageWriter()
-    writer.set_options({"module_height": 15.0, "quiet_zone": 2.0, "write_text": True})
     buf = BytesIO()
-    Code128(barcode_value, writer=writer).write(buf)
+    # OJO: estas opciones deben pasarse a .write(), NO a writer.set_options() antes de
+    # construir — Code128.render() resetea module_width/quiet_zone a sus mínimos internos
+    # (0.2mm / 2.54mm) salvo que se le pasen aquí, así que set_options() antes no tenía efecto.
+    Code128(barcode_value, writer=writer).write(
+        buf, {"module_width": 0.4, "module_height": 15.0, "quiet_zone": 4.0, "write_text": True}
+    )
     buf.seek(0)
     file_path.write_bytes(buf.read())
     return f"/static/labels/{safe_key}.png"

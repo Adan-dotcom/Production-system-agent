@@ -64,17 +64,21 @@
       text-align: center;
     }
 
-    /* ── Zona inferior: CANTIDAD + código de barras ── */
+    /* ── Zona inferior: CANTIDAD arriba, código de barras en su propia fila
+       a todo lo ancho debajo — antes compartían fila y el barcode se salía
+       del frame (overflow:hidden lo cortaba a la mitad) porque CANTIDAD ya
+       ocupa ~2.8in de las ~3.6in disponibles. ── */
     .bottom {
       margin-top: 6px;
-      display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+      display: flex; flex-direction: column; gap: 4px;
     }
     .cantidad { font-size: 15px; font-weight: 400; white-space: nowrap; }
     .cantidad .v { font-size: 32px; font-weight: 900; text-decoration: underline;
                    text-underline-offset: 3px; letter-spacing: -.01em; }
     .cantidad .mode { font-size: 10px; font-weight: 700; }
     .barcode { text-align: center; }
-    .barcode img { height: 0.46in; max-width: 1.9in; width: auto; object-fit: fill; background: #fff; display: block; }
+    .barcode img { height: 0.55in; max-width: 100%; width: auto; object-fit: fill; background: #fff; display: block; margin: 0 auto;
+                   image-rendering: -webkit-optimize-contrast; image-rendering: pixelated; image-rendering: crisp-edges; }
     .barcode .val { font-size: 10.5px; font-family: "Courier New", monospace; letter-spacing: .08em; margin-top: -2px; }
 
     .btns { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
