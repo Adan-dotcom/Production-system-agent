@@ -43,6 +43,10 @@ class Cliente(Base):
     # Default label branding for this customer. When 'distributor', the operator
     # UI pre-checks the "Distribuidor" box for any line of this customer's orders.
     default_branding_mode = Column(String(20), nullable=False, default="normal")
+    # Bruto/neto por cliente — admin-only. Solo 2 clientes no se les cobra la
+    # tara (bobina), así que a ellos se les marca 'net' aquí y el server lo
+    # aplica solo; el operador ya NO puede elegirlo (ver items.py produce_item).
+    default_print_weight_mode = Column(String(10), nullable=False, default="gross")
 
 
 class Producto(Base):

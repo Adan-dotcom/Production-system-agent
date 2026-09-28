@@ -310,7 +310,23 @@ def produce_item(
 
     # Validate/resolve label options
     branding_mode = payload.branding_mode if payload.branding_mode in ("normal", "distributor") else "normal"
-    print_weight_mode = payload.print_weight_mode if payload.print_weight_mode in ("gross", "net") else "gross"
+
+    # Bruto/neto YA NO lo elige el operador — se calcula del lado servidor a
+    # partir del cliente del pedido (solo ~2 clientes no pagan tara/bobina,
+    # los marca el admin en /ui → Clientes). Cualquier print_weight_mode que
+    # venga en el payload se ignora a propósito: si el operador seleccionaba
+    # "Neto" por error en un cliente que sí se cobra, esa bobina nunca se
+    # facturaba. Mismo patrón que effective_branding en orders.py.
+    order_for_line = db.query(models.SalesOrder).filter(
+        models.SalesOrder.sales_order_id == line.sales_order_id
+    ).first()
+    customer_for_line = (
+        db.query(models.Cliente).filter(models.Cliente.customer_id == order_for_line.customer_id).first()
+        if order_for_line else None
+    )
+    print_weight_mode = line.default_print_weight_mode or "gross"
+    if customer_for_line and customer_for_line.default_print_weight_mode == "net":
+        print_weight_mode = "net"
 
     # Resolve lot
     if payload.lot_id:
@@ -364,9 +380,7 @@ def produce_item(
     roll_number = generate_roll_number(db)
 
     # Barcode: <sae_order_number>-<roll_number>
-    so = db.query(models.SalesOrder).filter(
-        models.SalesOrder.sales_order_id == line.sales_order_id
-    ).first()
+    so = order_for_line
     barcode_value = f"{so.sae_order_number}-{roll_number}" if so else item_code
 
     # Status / stage

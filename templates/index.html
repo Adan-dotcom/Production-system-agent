@@ -682,8 +682,9 @@
         <div class="card span-12">
           <div class="section-row">
             <div>
-              <h2>👥 Clientes — etiqueta de distribuidor</h2>
-              <p class="subtitle">Marca los pocos clientes que llevan etiqueta de DISTRIBUIDOR. A esos, el operador les verá la casilla "Distribuidor" ya seleccionada por default en cada rollo (puede desmarcarla si hace falta).</p>
+              <h2>👥 Clientes — etiqueta de distribuidor y peso</h2>
+              <p class="subtitle">Marca los pocos clientes que llevan etiqueta de DISTRIBUIDOR. A esos, el operador les verá la casilla "Distribuidor" ya seleccionada por default en cada rollo (puede desmarcarla si hace falta).<br/>
+              <strong>Peso (Bruto/Neto):</strong> ya NO lo elige el operador — se define aquí, por cliente. Solo marca "Neto" a los clientes a los que NO se les cobra la bobina (tara); a todos los demás se les cobra bruto siempre.</p>
             </div>
             <button class="btn-secondary" style="width:auto;" onclick="loadCustomersTable()">🔄 Refrescar</button>
           </div>
@@ -702,9 +703,9 @@
           <div class="table-wrap" style="margin-top:14px;">
             <table>
               <thead>
-                <tr><th>ID</th><th>Cliente</th><th>Pedidos</th><th>Etiqueta default</th><th>Acción</th></tr>
+                <tr><th>ID</th><th>Cliente</th><th>Pedidos</th><th>Etiqueta default</th><th>Peso</th><th>Acción</th></tr>
               </thead>
-              <tbody id="customersTableBody"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody>
+              <tbody id="customersTableBody"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
             </table>
           </div>
           <div id="customersStatus" class="status"></div>
@@ -1380,6 +1381,8 @@ async function loadUsersTable() {
           ${u.is_active
             ? `<button class="btn-danger" style="width:auto;padding:4px 10px;font-size:12px;" onclick="toggleUserStatus(${u.user_id},false)">Desactivar</button>`
             : `<button class="btn-primary" style="width:auto;padding:4px 10px;font-size:12px;" onclick="toggleUserStatus(${u.user_id},true)">Activar</button>`}
+          <button class="btn-danger" style="width:auto;padding:4px 10px;font-size:12px;margin-left:4px;background:#7f1d1d;"
+                  onclick="deleteUserForever(${u.user_id}, '${(u.username || '').replace(/'/g, "\\'")}')">Borrar</button>
         </td>
       </tr>`).join('');
   } catch(e) {
@@ -1398,6 +1401,21 @@ async function toggleUserStatus(userId, active) {
     loadUsersTable();
   } catch(e) {
     $('usersStatus').style.display = 'block';
+    setStatus('usersStatus', e, true);
+  }
+}
+
+// Borrado PERMANENTE (ej. el operador renunció). Distinto de Desactivar
+// (vacaciones/ausencia temporal, reversible). El server bloquea el borrado
+// si el usuario ya tiene historial de producción, para no perder trazabilidad.
+async function deleteUserForever(userId, username) {
+  if (!confirm(`¿Borrar PARA SIEMPRE al usuario "${username}"? Esto NO se puede deshacer.\n\nSi ya produjo/imprimió/canceló algo, el sistema no va a dejar (usa Desactivar en ese caso).`)) return;
+  $('usersStatus').style.display = 'block';
+  try {
+    await api(`/admin/users/${userId}`, { method: 'DELETE', headers: headers() });
+    setStatus('usersStatus', `Usuario "${username}" borrado permanentemente ✓`);
+    loadUsersTable();
+  } catch(e) {
     setStatus('usersStatus', e, true);
   }
 }
@@ -1533,7 +1551,7 @@ async function loadCustomersTable() {
     if (onlyDist) qs.set('only_distributor', 'true');
     const data = await api(`/config/customers${qs.toString() ? '?'+qs.toString() : ''}`, { headers: headers(false) });
     const tbody = $('customersTableBody');
-    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="muted">Sin clientes.</td></tr>'; return; }
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="muted">Sin clientes.</td></tr>'; return; }
     tbody.innerHTML = data.map(c => {
       const isDist = c.is_distributor;
       const badge = isDist
@@ -1542,12 +1560,22 @@ async function loadCustomersTable() {
       const btn = isDist
         ? `<button class="btn-secondary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerBranding(${c.customer_id}, 'normal')">Quitar distribuidor</button>`
         : `<button class="btn-primary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerBranding(${c.customer_id}, 'distributor')">Marcar distribuidor</button>`;
+
+      const isNet = c.is_net_weight;
+      const pesoBadge = isNet
+        ? '<span style="background:#fef3c7;color:#92400e;padding:3px 9px;border-radius:6px;font-weight:800;font-size:12px;">NETO</span>'
+        : '<span style="color:#94a3b8;">Bruto</span>';
+      const pesoBtn = isNet
+        ? `<button class="btn-secondary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerWeightMode(${c.customer_id}, 'gross')">Volver a bruto</button>`
+        : `<button class="btn-primary" style="width:auto;padding:5px 10px;font-size:12px;" onclick="setCustomerWeightMode(${c.customer_id}, 'net')">Marcar neto</button>`;
+
       return `<tr>
         <td>${c.customer_id}</td>
         <td><strong>${c.name}</strong></td>
         <td>${c.order_count}</td>
         <td>${badge}</td>
-        <td style="white-space:nowrap;">${btn}</td>
+        <td>${pesoBadge}</td>
+        <td style="white-space:nowrap;">${btn}<br/><div style="margin-top:4px;">${pesoBtn}</div></td>
       </tr>`;
     }).join('');
   } catch(e) { setStatus('customersStatus', e, true); }
@@ -1561,6 +1589,18 @@ async function setCustomerBranding(customerId, mode) {
       body: JSON.stringify({ default_branding_mode: mode }),
     });
     setStatus('customersStatus', mode === 'distributor' ? 'Cliente marcado como distribuidor ✓' : 'Cliente vuelto a estándar ✓');
+    loadCustomersTable();
+  } catch(e) { setStatus('customersStatus', e, true); }
+}
+
+async function setCustomerWeightMode(customerId, mode) {
+  try {
+    await api(`/config/customers/${customerId}`, {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ default_print_weight_mode: mode }),
+    });
+    setStatus('customersStatus', mode === 'net' ? 'Cliente marcado como NETO (no se le cobra tara) ✓' : 'Cliente vuelto a bruto ✓');
     loadCustomersTable();
   } catch(e) { setStatus('customersStatus', e, true); }
 }

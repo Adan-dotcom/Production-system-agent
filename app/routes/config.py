@@ -268,11 +268,13 @@ def list_customers(
     )
     return [
         {
-            "customer_id":           c.customer_id,
-            "name":                  c.name,
-            "default_branding_mode": c.default_branding_mode or "normal",
-            "is_distributor":        (c.default_branding_mode == "distributor"),
-            "order_count":           int(counts.get(c.customer_id, 0)),
+            "customer_id":               c.customer_id,
+            "name":                      c.name,
+            "default_branding_mode":     c.default_branding_mode or "normal",
+            "is_distributor":            (c.default_branding_mode == "distributor"),
+            "default_print_weight_mode": c.default_print_weight_mode or "gross",
+            "is_net_weight":             (c.default_print_weight_mode == "net"),
+            "order_count":               int(counts.get(c.customer_id, 0)),
         }
         for c in customers
     ]
@@ -285,21 +287,30 @@ def update_customer_branding(
     db:          Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
-    """Marca/desmarca a un cliente como distribuidor por default. El operador verá
-    la casilla 'Distribuidor' pre-seleccionada en las líneas de este cliente."""
-    if payload.default_branding_mode not in ("normal", "distributor"):
-        raise HTTPException(status_code=400, detail="default_branding_mode inválido")
-
+    """Actualiza los defaults de etiqueta de un cliente: distribuidor y/o
+    bruto/neto. Ambos campos son opcionales — solo se cambia lo que venga.
+    El bruto/neto ya NO lo puede tocar el operador (ver items.py produce_item);
+    solo existen ~2 clientes a los que no se les cobra la tara/bobina."""
     customer = db.query(models.Cliente).filter(models.Cliente.customer_id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-    customer.default_branding_mode = payload.default_branding_mode
+    if payload.default_branding_mode is not None:
+        if payload.default_branding_mode not in ("normal", "distributor"):
+            raise HTTPException(status_code=400, detail="default_branding_mode inválido")
+        customer.default_branding_mode = payload.default_branding_mode
+
+    if payload.default_print_weight_mode is not None:
+        if payload.default_print_weight_mode not in ("gross", "net"):
+            raise HTTPException(status_code=400, detail="default_print_weight_mode inválido")
+        customer.default_print_weight_mode = payload.default_print_weight_mode
+
     db.commit()
 
     return {
-        "message":               "Cliente actualizado",
-        "customer_id":           customer.customer_id,
-        "name":                  customer.name,
-        "default_branding_mode": customer.default_branding_mode,
+        "message":                   "Cliente actualizado",
+        "customer_id":               customer.customer_id,
+        "name":                      customer.name,
+        "default_branding_mode":     customer.default_branding_mode,
+        "default_print_weight_mode": customer.default_print_weight_mode,
     }

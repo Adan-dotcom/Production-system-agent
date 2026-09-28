@@ -39,8 +39,10 @@ def build_barcode_png(barcode_value: str, filename_key: str) -> str:
     # OJO: estas opciones deben pasarse a .write(), NO a writer.set_options() antes de
     # construir — Code128.render() resetea module_width/quiet_zone a sus mínimos internos
     # (0.2mm / 2.54mm) salvo que se le pasen aquí, así que set_options() antes no tenía efecto.
+    # write_text=False: el valor legible ya lo dibuja el HTML (.barcode .val) — con la
+    # librería dibujándolo también dentro del PNG salía duplicado y desperdiciaba espacio.
     Code128(barcode_value, writer=writer).write(
-        buf, {"module_width": 0.4, "module_height": 15.0, "quiet_zone": 4.0, "write_text": True}
+        buf, {"module_width": 0.4, "module_height": 15.0, "quiet_zone": 4.0, "write_text": False}
     )
     buf.seek(0)
     file_path.write_bytes(buf.read())
@@ -140,9 +142,14 @@ def print_label(
                    f"{'Reemplazado por: ' + str(item.replaced_by_item_id) if item.replaced_by_item_id else ''}"
         )
 
-    # Use item values unless request overrides
+    # branding_mode sí se puede pedir distinto al imprimir (uso legítimo:
+    # imprimir una copia "distribuidor" de un rollo normal). print_weight_mode
+    # NO se acepta del payload — se fija una sola vez en /items/produce a
+    # partir del cliente y no se puede cambiar después, ni por el operador
+    # ni por un reprint; evita que un reprint "arregle" a Neto un rollo que
+    # sí se cobra con tara.
     branding_mode     = payload.branding_mode or item.branding_mode or "normal"
-    print_weight_mode = payload.print_weight_mode or item.print_weight_mode or "gross"
+    print_weight_mode = item.print_weight_mode or "gross"
     printed_weight_kg = (
         float(item.gross_weight or 0) if print_weight_mode == "gross"
         else float(item.net_weight or 0)

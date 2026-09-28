@@ -71,10 +71,12 @@ def get_order_by_sae(sae_order_number: str, db: Session = Depends(get_db)):
         "lot_id": lot.lot_id if lot else None,
         "lot_code": lot.lot_code if lot else None,
         "customer_default_branding_mode": (customer.default_branding_mode or "normal") if customer else "normal",
+        "customer_default_print_weight_mode": (customer.default_print_weight_mode or "gross") if customer else "gross",
         "lines": [
             _line_with_progress(
                 db, line,
                 customer_default_branding=(customer.default_branding_mode if customer else None),
+                customer_default_print_weight_mode=(customer.default_print_weight_mode if customer else None),
             )
             for line in lines
         ],
@@ -85,7 +87,11 @@ def get_order_by_sae(sae_order_number: str, db: Session = Depends(get_db)):
 _WAREHOUSE_DEAD_STATUSES = ("cancelled", "replaced", "rejected")
 
 
-def _line_with_progress(db: Session, line, customer_default_branding: str = None) -> dict:
+def _line_with_progress(
+    db: Session, line,
+    customer_default_branding: str = None,
+    customer_default_print_weight_mode: str = None,
+) -> dict:
     """Serialize a sales order line and attach warehouse progress vs CANT.
 
     Progress = net kg of rolls already sent to 'almacen' (warehouse) compared
@@ -114,6 +120,14 @@ def _line_with_progress(db: Session, line, customer_default_branding: str = None
     if customer_default_branding == "distributor":
         effective_branding = "distributor"
 
+    # Efectivo bruto/neto: el cliente manda si está marcado 'net' (son los
+    # ~2 clientes a los que no se les cobra tara). Ya NO es elegible por el
+    # operador — items.py produce_item recalcula esto mismo del lado servidor
+    # y lo usa siempre, ignore lo que mande el cliente HTTP.
+    effective_print_weight_mode = line.default_print_weight_mode or "gross"
+    if customer_default_print_weight_mode == "net":
+        effective_print_weight_mode = "net"
+
     return {
         "sales_order_line_id": line.sales_order_line_id,
         "line_number": line.line_number,
@@ -131,7 +145,8 @@ def _line_with_progress(db: Session, line, customer_default_branding: str = None
         "default_branding_mode": effective_branding,
         "line_default_branding_mode": line.default_branding_mode or "normal",
         "customer_default_branding_mode": customer_default_branding or "normal",
-        "default_print_weight_mode": line.default_print_weight_mode or "gross",
+        "default_print_weight_mode": effective_print_weight_mode,
+        "customer_default_print_weight_mode": customer_default_print_weight_mode or "gross",
         "default_tare_rule_id": line.default_tare_rule_id,
         # ── Warehouse progress vs CANT ──
         "quantity_ordered": cant,

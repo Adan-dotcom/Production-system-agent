@@ -45,7 +45,9 @@ class ItemCancelRequest(BaseModel):
 class LabelPrintRequest(BaseModel):
     reason:           str = "print"
     branding_mode:    Optional[str] = None   # override; uses item value if None
-    print_weight_mode: Optional[str] = None  # override; uses item value if None
+    print_weight_mode: Optional[str] = None  # aceptado por compat, pero IGNORADO por el
+                                              # servidor (ver labels.py print_label) — el
+                                              # bruto/neto ya no es editable después de producir
 
 
 class LabelReprintRequest(BaseModel):
@@ -157,4 +159,5 @@ class PalletAddItemRequest(BaseModel):
 # ── CUSTOMERS ──────────────────────────────────────────────────────────────
 
 class CustomerBrandingUpdateRequest(BaseModel):
-    default_branding_mode: str   # 'normal' | 'distributor'
+    default_branding_mode:     Optional[str] = None   # 'normal' | 'distributor'
+    default_print_weight_mode: Optional[str] = None   # 'gross' | 'net' — admin-only

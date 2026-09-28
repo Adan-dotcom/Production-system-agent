@@ -66,6 +66,53 @@ def update_user_status(user_id: int, payload: schemas.UserUpdateStatusRequest, d
     return {"message": "Estado actualizado", "user_id": user.user_id, "is_active": user.is_active}
 
 
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    """Borra un usuario PARA SIEMPRE (ej. renunció). Distinto de desactivar
+    (que es para ausencias temporales como vacaciones, y solo lo oculta del
+    dropdown sin perder nada).
+
+    Un borrado real no es posible sin perder trazabilidad si el usuario ya
+    produjo/imprimió/canceló algo — esas tablas tienen su user_id como FK NOT
+    NULL (quién hizo qué rollo, quién imprimió, quién canceló). Por eso aquí
+    se bloquea con un mensaje claro en vez de fallar feo por la FK, o peor,
+    en vez de borrar en cascada el historial de producción. Si tiene
+    historial, la única opción real es desactivarlo.
+    """
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if user.user_id == current_user.user_id:
+        raise HTTPException(status_code=400, detail="No puedes borrar tu propio usuario")
+
+    history_checks = [
+        ("rollos producidos",  db.query(models.Item).filter(models.Item.created_by_user_id == user_id).count()),
+        ("rollos cancelados",  db.query(models.Item).filter(models.Item.cancelled_by_user_id == user_id).count()),
+        ("eventos de etapa",   db.query(models.StageEvent).filter(models.StageEvent.operator_id == user_id).count()),
+        ("impresiones",        db.query(models.LabelPrintEvent).filter(models.LabelPrintEvent.printed_by_user_id == user_id).count()),
+        ("tarimas creadas",    db.query(models.Pallet).filter(models.Pallet.created_by_user_id == user_id).count()),
+        ("tarimas cerradas",   db.query(models.Pallet).filter(models.Pallet.closed_by_user_id == user_id).count()),
+        ("correcciones",       db.query(models.EventCorrection).filter(models.EventCorrection.corrected_by_user_id == user_id).count()),
+        ("cancelaciones",      db.query(models.ItemCancellation).filter(models.ItemCancellation.cancelled_by_user_id == user_id).count()),
+        ("rollos en tarimas",  db.query(models.PalletItem).filter(models.PalletItem.added_by_user_id == user_id).count()),
+        ("alertas resueltas",  db.query(models.Alert).filter(models.Alert.resolved_by_user_id == user_id).count()),
+        ("syncs de Excel",     db.query(models.AspelExcelImport).filter(models.AspelExcelImport.triggered_by == user_id).count()),
+    ]
+    total_history = sum(count for _, count in history_checks)
+    if total_history > 0:
+        detalle = ", ".join(f"{count} {label}" for label, count in history_checks if count > 0)
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se puede borrar: este usuario tiene historial de producción ({detalle}). "
+                   f"Borrarlo perdería la trazabilidad de esos registros. Usa 'Desactivar' en su lugar.",
+        )
+
+    db.delete(user)
+    db.commit()
+    return {"message": "Usuario borrado permanentemente", "user_id": user_id}
+
+
 @router.patch("/users/{user_id}/password")
 def reset_user_password(user_id: int, payload: schemas.UserResetPasswordRequest, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()

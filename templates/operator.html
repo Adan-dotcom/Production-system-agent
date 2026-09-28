@@ -100,6 +100,7 @@
     .label-preview-badge { font-size:11px; font-weight:800; padding:3px 10px; border-radius:4px; margin-left:4px; }
     .badge-normal     { background:#dcfce7; color:#166534; }
     .badge-distributor { background:#dbeafe; color:#1e40af; }
+    .badge-net        { background:#fef3c7; color:#92400e; }
 
     /* BIG WEIGHT */
     .bigw { width:100%; font-size:52px !important; font-weight:900 !important; text-align:center !important; letter-spacing:3px; border:2px solid var(--border) !important; border-radius:7px !important; padding:10px 14px !important; color:var(--accent) !important; background:#f8f9fa !important; font-variant-numeric:tabular-nums; }
@@ -275,10 +276,10 @@
         </label>
         <div style="height:24px; width:1px; background:var(--border);"></div>
         <div>
-          <span style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;">Peso a imprimir:</span>
-          <div class="radio-group" style="margin-top:4px;">
-            <label class="radio-opt"><input type="radio" name="pwMode" id="pwBruto" value="gross" checked /> Bruto</label>
-            <label class="radio-opt"><input type="radio" name="pwMode" id="pwNeto"  value="net" /> Neto</label>
+          <span style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;"
+                title="Lo define un admin por cliente en /ui — Clientes, no se puede cambiar aquí.">Peso a imprimir:</span>
+          <div style="margin-top:4px;">
+            <span id="pwBadge" class="label-preview-badge badge-normal">BRUTO</span>
           </div>
         </div>
       </div>
@@ -621,9 +622,15 @@ $("distCheck").addEventListener("change",function(){
   $("brandBadge").className = "label-preview-badge " + (this.checked ? "badge-distributor" : "badge-normal");
   updateNetInfo();
 });
-document.querySelectorAll('input[name="pwMode"]').forEach(r=>{
-  r.addEventListener("change",function(){ printWeightMode=this.value; updateNetInfo(); });
-});
+
+// Bruto/Neto ya NO es seleccionable por el operador — lo decide el admin por
+// cliente (Clientes → Peso). Esto solo refleja lo que ya viene del pedido.
+function setPwBadge(mode){
+  printWeightMode = mode === "net" ? "net" : "gross";
+  const badge = $("pwBadge");
+  badge.textContent = printWeightMode === "net" ? "NETO" : "BRUTO";
+  badge.className = "label-preview-badge " + (printWeightMode === "net" ? "badge-net" : "badge-normal");
+}
 
 // ── PI search ──
 let lotId=null, orderId=null, lineId=null, tare=0;
@@ -733,22 +740,21 @@ function setLine(l){
   const bm = l.default_branding_mode || "normal";
   const pm = l.default_print_weight_mode || "gross";
   brandingMode    = bm;
-  printWeightMode = pm;
   $("distCheck").checked = bm === "distributor";
   $("brandBadge").textContent = bm === "distributor" ? "DISTRIBUIDOR" : "ESTÁNDAR";
   $("brandBadge").className = "label-preview-badge " + (bm === "distributor" ? "badge-distributor" : "badge-normal");
-  document.querySelector(`input[name="pwMode"][value="${pm}"]`).checked = true;
+  setPwBadge(pm);
 }
 
 $("lineSelect").addEventListener("change",function(){
   const o=this.options[this.selectedIndex];
   if(!this.value){ lineId=null; $("lineDetailStrip").style.display="none"; checkReady(); return; }
   lineId=parseInt(this.value); tare=parseFloat(o.dataset.tare)||0;
-  brandingMode=o.dataset.branding||"normal"; printWeightMode=o.dataset.pwmode||"gross";
+  brandingMode=o.dataset.branding||"normal";
   $("distCheck").checked=(brandingMode==="distributor");
   $("brandBadge").textContent=brandingMode==="distributor"?"DISTRIBUIDOR":"ESTÁNDAR";
   $("brandBadge").className="label-preview-badge "+(brandingMode==="distributor"?"badge-distributor":"badge-normal");
-  document.querySelector(`input[name="pwMode"][value="${printWeightMode}"]`).checked=true;
+  setPwBadge(o.dataset.pwmode||"gross");
   $("lineDetailStrip").innerHTML=`<div><strong>Producto</strong>${o.dataset.prod}</div><div><strong>Medida</strong>${o.dataset.med} · <strong>Calibre</strong> ${o.dataset.cal}</div><div><strong>Tara bobina</strong>${tare>0?tare+" kg":"—"}</div>`;
   $("lineDetailStrip").style.display="block";
   if(lastOrderData) renderPiProgress(lastOrderData.lines, lineId);
